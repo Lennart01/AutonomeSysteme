@@ -1,4 +1,5 @@
 # AutonomeSysteme
 Autonome Systeme Unterlagen mit Labor. Siehe [hier](https://sulzmann.github.io/AutonomeSysteme/)
 
-Aktuelles Semester [hier](https://sulzmann.github.io/AutonomeSysteme/semSoSe24.html)
+## Fork von Lennart01
+Fork der versucht die VL Unterlagen mit astro besser zu strukturieren.
