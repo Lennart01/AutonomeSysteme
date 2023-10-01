@@ -1,44 +1,69 @@
 ---
-title: Um was geht's hier
-description: Martin Sulzmann
+title: Autonome Systeme - Um was geht's hier
+description: Martin Sulzmann 
 ---
 
 ## Gegenstand der Vorlesung
 
-- Autonome und reaktive Systeme
-    - Betriebssystem, Steuergerät, Smartphone, ...
-- Softwaresysteme in ständiger Interaktion mit Umgebung und 'inneren' Komponenten
+* Autonome und reaktive Systeme
 
-- Eigenschaften
-  - Nebenläufigkeit
-  - Nichtdeterminsmus (aka Indeterminismus)
-  - Nichtterminierung
-  - Kommunikation und Synchronization
+
+	+ Betriebssystem, Steuergerät, Smartphone, ...
+* Softwaresysteme in ständiger Interaktion mit Umgebung und ’inneren’ Komponenten
+* Eigenschaften
+
+
+	+ Nebenläufigkeit
+	+ Nichtdeterminsmus (aka Indeterminismus)
+	+ Nichtterminierung
+	+ Kommunikation und Synchronization
+
+
 
 ## Konzepte und Methoden
 
 Modellierung und Spezifikation
+
+
 Implementierung und Analyse
+
+
 Verifikation/Validation
 
-Konkret betrachen wir:
-- Die Programmiersprache Go
-- Temporale Logik und UPPAAL Modelchecker
-- Programm Analyse (statische und dynamische Analyse Methoden). Ziel Nachweis von Eigenschaften.
+
+Konkret betrachen wir
+
+
+* Die Programmiersprache Go
+* Temporale Logik und UPPAAL Modelchecker
+* Programm Analyse (statische und dynamische Analyse Methoden). Ziel Nachweis von Eigenschaften.
+
 
 Mix aus Vorlesung und praktischen Übungen (Labor)
+
+
 Weiterführende Seminar-/Projektarbeiten, Bachelor/Master, Drittmittelprojekte, ...
+
+
 
 ## Die Programmiersprache Go
 
 Nix neues. Altbekanntes und bewährtes in einer C-artigen Sprache zusammengefasst.
+
+
 Unser Fokus:
-- Nebenläufigkeit (Concurrency)
-- Kanal-basierte Kommunikation
+
+
+* Nebenläufigkeit (Concurrency)
+* Kanal-basierte Kommunikation
+
 
 Lambdas, ..., nebenbei erklärt.
 
+
+
 ```go
+
 // Package system!
 package main
 
@@ -81,12 +106,17 @@ func main() {
     fmt.Printf("Ende")      
 }
 ```
+
 Go inspiriert von
 
-- [Haskell](https://www.haskell.org/)
-- [Concurrent ML](https://en.wikipedia.org/wiki/Concurrent_ML)
+
+* [Haskell](https://www.haskell.org/)
+* [Concurrent ML](https://en.wikipedia.org/wiki/Concurrent_ML)
+
+
 
 ## Deadlock (Verklemmung)
+
 
 ```go
 package main
@@ -115,7 +145,9 @@ func main() {
 }
 ```
 
+
 ## Data race
+
 
 ```go
 package main
@@ -144,10 +176,13 @@ func main() {
 }
 ```
 
+
 ## Fazit und Ausblick
 
-- Go hat ausdrucksstarke Konzepte zur nebenläufigen Programmierung
-- Nebenläufige Programmierung ist trickreich.
-- Versteckte Deadlocks und Data Races
-- Modellierung und Programmanalysen zur Verifikation und Validation
-- Statische versus dynamische Methoden
+* Go hat ausdrucksstarke Konzepte zur nebenläufigen Programmierung
+* Nebenläufige Programmierung ist trickreich.
+* Versteckte Deadlocks und Data Races
+* Modellierung und Programmanalysen zur Verifikation und Validation
+* Statische versus dynamische Methoden
+
+

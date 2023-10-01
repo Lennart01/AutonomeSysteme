@@ -20,6 +20,10 @@ export default defineConfig({
 					label: 'Teil 1',
 					autogenerate: { directory: 'teil_1' },
 				},
+				{
+					label: 'Teil 2',
+					autogenerate: { directory: 'teil_2' },
+				},
 			],
 		}),
 	],
