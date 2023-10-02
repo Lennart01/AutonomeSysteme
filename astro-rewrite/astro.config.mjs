@@ -8,7 +8,7 @@ export default defineConfig({
 		starlight({
 			title: 'Autonome Systeme',
 			social: {
-				github: 'https://github.com/withastro/starlight',
+				github: 'https://github.com/Lennart01/AutonomeSysteme',
 			},
 			sidebar: [
 				{
