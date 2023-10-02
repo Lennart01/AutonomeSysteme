@@ -18,19 +18,18 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Next steps
 
 <CardGrid stagger>
-	<Card title="Update content" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
+	<Card title="Outdated oder Fehler gefunden?" icon="warning">
+		Mach einen Issue auf GitHub auf.
 	</Card>
-	<Card title="Add new content" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
+	<Card title="Orginal" icon="document">
+		Das Orginal von Prof. Martin Sulzmann findest du [hier](https://sulzmann.github.io/AutonomeSysteme/)
 	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
+	<Card title="Astro" icon="rocket">
+		Diese Seite wurde mit [astro](https://astro.build/) erstellt und basiert auf [Starlight](https://starlight.astro.build/).
 	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
+	<Card title="Zuletzt aktualisiert" icon="information">
+		{new Date().toLocaleDateString()}
 	</Card>
 </CardGrid>
