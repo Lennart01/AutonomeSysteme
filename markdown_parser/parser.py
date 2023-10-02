@@ -5,6 +5,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', '--input', help='input file path', required=True)
 parser.add_argument('-o', '--output', help='output file path', required=True)
+parser.add_argument('-t', '--type', help='type of input can be plain or vl_slides, default is vl_slides', default='vl_slides')
 args = parser.parse_args()
 
 INPUT_FILE = args.input
@@ -12,6 +13,18 @@ OUTPUT_FILE = args.output
 
 with open(INPUT_FILE, 'r') as f:
     html = f.read()
+
+if args.type == 'plain':
+    soup = BeautifulSoup(html, 'html.parser')
+    markdown_lines = markdownify.markdownify(str(soup)).split('\n')
+    md_lines = []
+    for md_line in markdown_lines:
+        if '```' in md_line:
+            md_line = md_line.replace('```', '```go')
+        md_lines.append(md_line)
+    with open(OUTPUT_FILE, 'w') as f:
+        f.write('\n'.join(md_lines))
+    exit()
 
 soup = BeautifulSoup(html, 'html.parser')
 
