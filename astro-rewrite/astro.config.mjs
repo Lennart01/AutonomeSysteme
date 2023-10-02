@@ -24,6 +24,10 @@ export default defineConfig({
 					label: 'Teil 2',
 					autogenerate: { directory: 'teil_2' },
 				},
+				{
+					label: 'UPPAAL Labor',
+					autogenerate: { directory: 'uppaal' },
+				},
 			],
 		}),
 	],
