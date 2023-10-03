@@ -756,6 +756,7 @@ rel(t,y) {
 fork(t1,t2) {
   Th(t2) = Th(t1)
   inc(Th(t2),t2)
+  inc(Th(t1),t1)
 }
 
 join(t1,t2) {
