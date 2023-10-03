@@ -12,6 +12,11 @@ export default defineConfig({
 			},
 			sidebar: [
 				{
+					label: 'Semesterplan',
+					autogenerate: { directory: 'semesterplan' },
+				
+				},
+				{
 					label: 'Überblick',
 					autogenerate: { directory: 'overview' },
 					
