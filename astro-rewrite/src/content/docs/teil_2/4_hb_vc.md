@@ -3,8 +3,6 @@ title: Dynamic data race prediction - Happens-before and vector clocks
 description: Martin Sulzmann 
 ---
 
-## Overview
-
 Data race prediction
 --------------------
 
