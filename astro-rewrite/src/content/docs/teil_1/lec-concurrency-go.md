@@ -41,22 +41,24 @@ Programmiersprache entwickelt von Google: [Go](http://golang.org/)
         fmt.Printf("hello, world\n")
     }
 
--   Typdeklarationen in 'logischer' Reihenfolge
+-   Typdeklarationen in ‘logischer’ Reihenfolge
     -   `var varName varType`
     -   Eine Variable `varName` mit dem Typ `varType`
 -   Eine Statement pro Zeile. Semikolon redundant.
 
 # Go Toolchain
 
--   Ausführung via der "Kommandozeile"
+-   Ausführung via der “Kommandozeile”
+
     -   `go run hello.go`
 
     -   `gofmt hello.go`
-        -   Automatischer "pretty printer"
+
+        -   Automatischer “pretty printer”
         -   Ausgabe auf Konsole per Default
         -   `gofmt -w hello.go` schreibt ins gleiche File
 
-    -   Den Editor können Sie frei wählen (emacs, ...)
+    -   Den Editor können Sie frei wählen (emacs, …)
 
 -   Oder via web browser auf [offizieller Go
     Webseite](https://golang.org/)
@@ -67,7 +69,7 @@ Zur Info, unsere Programme bestimmen immer aus einer Datei.
 
 # Nebenläufigkeit (goroutine)
 
-Nebenläufige Ausführung: "just say go"
+Nebenläufige Ausführung: “just say go”
 
     package main
 
@@ -88,12 +90,12 @@ Nebenläufige Ausführung: "just say go"
         thread("C")
     }
 
--   `go` auch bekannt als "fork" oder "spawn"
+-   `go` auch bekannt als “fork” oder “spawn”
 
 -   Nebenläufige Ausführung des Statements, hier der Funktionen
-    thread("A") und thread("B").
+    thread(“A”) und thread(“B”).
 
--   Beachte, thread("C") wird im Haupt-thread ausgeführt. Sprich, es
+-   Beachte, thread(“C”) wird im Haupt-thread ausgeführt. Sprich, es
     werden drei Threads nebenläufig ausgeführt.
 
 -   Scheduling der Threads wird vom Laufzeitsysteme verwaltet.
@@ -141,9 +143,9 @@ Blockierende Anweisungen:
 
 -   Thread schlafen legen (delay/sleep)
 
--   Empfang auf Kanal (potentiell blockierend da Kanal 'leer' sein kann)
+-   Empfang auf Kanal (potentiell blockierend da Kanal ‘leer’ sein kann)
 
--   Senden auf Kanal (potentiell blockierend da Kanal 'voll' sein kann)
+-   Senden auf Kanal (potentiell blockierend da Kanal ‘voll’ sein kann)
 
 #### Zustandsbasierte Ausführung
 
@@ -224,7 +226,7 @@ Ausfuehrung obigen Programs. Annahme: Eine CPU verfuegbar.
 -   A Thread blockiert wegen Sleep Anweisung
 
 -   In der Zwischenzweit, Blockierung von Main Thread aufgehoben, da
-    'Sleep' Zeit um ist
+    ‘Sleep’ Zeit um ist
 
 <!-- -->
 
@@ -319,10 +321,10 @@ Und eine weitere Variante.
         thread("C")
     }
 
-# Kommunikation ("channels")
+# Kommunikation (“channels”)
 
 Der Nachrichtenaustausch zwischen Threads geschieht mit Hilfe von
-Kanälen ("channels"). Folgendes Prinzip gilt:
+Kanälen (“channels”). Folgendes Prinzip gilt:
 
 1.  Jeder Thread kann Nachrichten senden und empfangen.
 
@@ -377,7 +379,7 @@ Folgende Regeln gelten im Falle von Nachrichtenaustasch.
     -   Ein Empfänger blockiert solange bis Nachricht im Puffer
         vorhanden ist.
     -   Ein Sender blockiert nur falls kein Puffer mehr vorhanden ist.
-    -   Der Puffer verhält sich wie eine Schlange ("FIFO queue").
+    -   Der Puffer verhält sich wie eine Schlange (“FIFO queue”).
 
 Der Unterschied ist also wie folgt.
 
@@ -593,7 +595,7 @@ Als weitere Variante. Kanal mit Puffer 1 und snd ohne Sleep.
          //
          // (a) ist die Go Variante. Siehe oben.
 
--   Im Falle von 'Sleep' wird die Ausfuehrung oft chaotisch (keine
+-   Im Falle von ‘Sleep’ wird die Ausfuehrung oft chaotisch (keine
     Garantie, dass nach exakt einer Sekunde der Thread wieder aufwacht)
 
 -   Im Fall eines Kanals mit Puffer ist das Senden nicht blockierend
@@ -898,7 +900,7 @@ bleibt aber stecken. Wieso?
 
 -   Das erstmalige Füllen der MVar in `newMVar` geschieht asynchron
 -   Alle weiteren `putMvar` Operationen laufen aber synchron ab!
--   Deshalb blockiert \`putMVar(m, 2)' und das liefert einen Deadlock.
+-   Deshalb blockiert \`putMVar(m, 2)’ und das liefert einen Deadlock.
 
 Eine Lösung: Nebenläufiger Thread der den Zustand der MVar kontrolliert.
 
@@ -936,7 +938,7 @@ Beachte:
     ohne Synchronisation via dem nebenläufigen Thread in `newMVar`.
 -   Im Falle einer direkten Synchronisation bleibt der MVar Zustand
     (korrekterweise) natürlich invariant.
--   Deshalb bleibt immer noch das "Problem direkter Kommunikation".
+-   Deshalb bleibt immer noch das “Problem direkter Kommunikation”.
 
 ## Kompletter Sourcecode
 
@@ -1076,9 +1078,9 @@ Beachte:
 
     }
 
-# Kanäle von Kanälen ("channels of channels")
+# Kanäle von Kanälen (“channels of channels”)
 
-Kanäle sind Werte ("first-class citizens")
+Kanäle sind Werte (“first-class citizens”)
 
     `var ch chan (chan int)`
 
@@ -1217,12 +1219,12 @@ Beachte:
 ## Aufgabe: Publish/Subscribe
 
 Ihre Aufgabe ist die Implementierung eines Publish/Subscribe Servers und
-mehrer Beispiel Clients. Als Vorgabe können Sie das "channels of
-channels" Beispiel aus der Vorlesung verwenden. Folgende Veränderungen
+mehrer Beispiel Clients. Als Vorgabe können Sie das “channels of
+channels” Beispiel aus der Vorlesung verwenden. Folgende Veränderungen
 sollten Sie vornehmen.
 
 Anstatt eines Request Kanals gibt es je einen Publish und Subscribe
-Kanal. Der Server empfängt auf beiden Kanälen und leitet "Publish"
+Kanal. Der Server empfängt auf beiden Kanälen und leitet “Publish”
 Nachrichten an die entsprechenden registrierten Clients weiter.
 
 Es gibt es zwei Arten von Clients. Publish Clients und Subscribe
@@ -1244,15 +1246,15 @@ Zuerst mal ein paar notwendige Datenstrukturen
         body  string
     }
 
-Jede Nachricht (message) besteht aus einem "topic" und "body".
+Jede Nachricht (message) besteht aus einem “topic” und “body”.
 
     type Sub struct {
         topic string
         news  chan Message
     }
 
-Jeder Subscriber registriert ein "topic" und einen "news" Kanal via dem
-Nachrichten zu dem entsprechenden "topic" erhalten werden können.
+Jeder Subscriber registriert ein “topic” und einen “news” Kanal via dem
+Nachrichten zu dem entsprechenden “topic” erhalten werden können.
 
     type Server struct {
         csub chan Sub
@@ -1289,7 +1291,7 @@ Ein Subscriber registriert sich und wartet auf Nachrichten.
 
     }
 
-Ein Publizierer (hier "slashdot") verschickt Nachrichten über den
+Ein Publizierer (hier “slashdot”) verschickt Nachrichten über den
 entsprechenden Kanal.
 
 ### Server
@@ -1332,7 +1334,7 @@ Man betrachte die mit (B) markierte Programmstelle. Falls ein Subscriber
 die Nachricht nicht abholt, wird der Server an dieser Stelle blockieren.
 Was wären aushilfen?
 
-1.  Der "news" Kanals des Subscribers hat einen Puffer. Was ist aber
+1.  Der “news” Kanals des Subscribers hat einen Puffer. Was ist aber
     falls der Puffer voll läuft?
 
 2.  Wir legen für jeden Subscriber einen eigenen Thread an. Dieser
@@ -1468,7 +1470,7 @@ vorhandenen Speicher begrenzt).
         reuters(server)
     }
 
-# Nichtdeterministische Auswahl ("select")
+# Nichtdeterministische Auswahl (“select”)
 
 -   Oftmals ist es notwendig gleichzeitig auf mehrere Ereignisse zu
     warten.
@@ -1601,7 +1603,7 @@ Blockiert wiederum falls falls kein Sender auf `ch2` aber Sender auf
         test2()
     }
 
-## Beispiel: Auswahl ist "fair"
+## Beispiel: Auswahl ist “fair”
 
 Beachte:
 
@@ -1885,7 +1887,7 @@ Beachte
 -   Mit Hilfe von default können Ereignisse priorisiert werden. Siehe
     Übungsaufgabe sleeping barber.
 
-## Erweiterung "barrier" (Ausführung mehrer Tasks)
+## Erweiterung “barrier” (Ausführung mehrer Tasks)
 
 Obige Lösung garantiert, dass *alle* Tasks innerhalb einer gewissen
 Zeitschranke abgearbeitet werden. Wir betrachten folgende Erweiterung
@@ -1895,8 +1897,8 @@ jeder Task maximal 100ms Zeit beanspruchen soll.
 
 ### Erster Versuch
 
-Hier ist ein erster Versuch. Wir betrachten nur einen Auszug ("code
-snippet").
+Hier ist ein erster Versuch. Wir betrachten nur einen Auszug (“code
+snippet”).
 
         var ch = make(chan int)
         // run all three tasks concurrently
@@ -1992,13 +1994,13 @@ Beachte, Funktion `completeWithin` ist nicht blockierend.
 
 3.  Überprüfung ob Zeitüberschreitung
 
-## Implementierung von \`select'
+## Implementierung von \`select’
 
 ### Go Laufzeitsystem (grobe Uebersicht)
 
-1.  Alle 'cases' werde in einem Feld (array) verwaltet.
+1.  Alle ‘cases’ werde in einem Feld (array) verwaltet.
 
-2.  Periodisch schaut das Go Laufzeitsystem nach, ob einer der 'cases'
+2.  Periodisch schaut das Go Laufzeitsystem nach, ob einer der ‘cases’
     verfuegbar ist (sprich synchronisiert werden kann). Im Detail:
 
 -   Zuerst werden die Feldelemente (zufaellig) permutiert.
@@ -2006,13 +2008,13 @@ Beachte, Funktion `completeWithin` ist nicht blockierend.
 -   Dann wird ein Element nach dem anderen geprueft (ob Synchronisation
     moeglich). Falls keine Synchronisation moeglich, macht das Go
     Laufzeitsystem mit anderen Threads weiter. Ansonsten wird der erste
-    zu synchroniserend 'case' (Feldelement) ausgewaehlt.
+    zu synchroniserend ‘case’ (Feldelement) ausgewaehlt.
 
 ### Alternative Implementierung
 
 Das `select` Kommando ist eine maechtige Erweiterung. Eine naive
 Kodierung mit Hilfe von Hilfsthreads und Kanaelen liefert ein anderes
-Ergebnis (siehe 'newsReader' Beispiel).
+Ergebnis (siehe ‘newsReader’ Beispiel).
 
 Interessanterweise, ist eine vollstaendige Kodierung von `select` nur
 mit Threads und Kanaelen moeglich. Bei Interesse kann dieses Thema in
@@ -2039,7 +2041,7 @@ Wir betrachten:
 
 Methodisches Vorgehen:
 
--   Beobachtung des Programmverhaltens als Programmspur ("trace").
+-   Beobachtung des Programmverhaltens als Programmspur (“trace”).
 
 -   Trace = Sequenz von Ereignissen
 
@@ -2122,7 +2124,7 @@ Zusammengefasst.
 Wir betrachten einen möglichen Programmablauf dargestellt als eine
 *Programmspur* (trace auf Englisch). Eine Programmspur ist eine Sequenz
 von Ereignissen und entspricht der abwechselnden Ausführung
-("interleaved execution") der einzelnen Threads.
+(“interleaved execution”) der einzelnen Threads.
 
 Ist die Trace-basierte Programmablauf Beschreibung verwandt mit der
 zustandsbasierten Ausführung? Ja, beide Notationen/Konzepte haben das
@@ -2144,9 +2146,9 @@ in der Programmspur zu verweisen.
 Im obigen Ablauf, kommuniziert S1 mit R1. Dies ist aus dem Trace
 ablesbar. Da auf `pre(ch!)` in S1 ein `post(ch!)` folgt. Auf `pre(ch?`)
 in R1 folgt ein `post(ch?)`. Im Fall einer Kommunikation
-(Sende-Empfange) nehmen wir an, dass das post Eregnis der Sendeoperation
-immer vor dem post Ereignis der Empfangsoperation im Trace aufgezeichnet
-ist.
+(Sende-Empfange) nehmen wir an, dass das post Ereignis der
+Sendeoperation immer vor dem post Ereignis der Empfangsoperation im
+Trace aufgezeichnet ist.
 
 Threads S1 und R1 terminieren. Thread R2 blockiert da es keinen
 Kommunikationspartner für `ch?_2` gibt. Alle Threads (hier nur R2) sind
@@ -2366,7 +2368,7 @@ vorgegeben.
     func signal(QSem)
 
 Beachte, `QSem` muss geeignet definiert werden. In Ihrer Implementierung
-sollten Sie nur \`\`einfache'' nicht gepufferte Kanäle verwenden
+sollten Sie nur \`\`einfache’’ nicht gepufferte Kanäle verwenden
 (ansonsten ist die Aufgabenstellung trivial).
 
 Initial wird die Quantität durch `newQSem` gesetzt. Funktion `wait`
@@ -2394,89 +2396,89 @@ Quantiät ist maximal 1, wobei am Anfang die aktuelle Quantität schon auf
 <thead>
 <tr class="header">
 <th style="text-align: left;">Quantität</th>
-<th style="text-align: left;">Thread 1</th>
-<th style="text-align: left;">Thread 2</th>
-<th style="text-align: left;">Thread 3</th>
-<th style="text-align: left;">Thread 4</th>
+<th>Thread 1</th>
+<th>Thread 2</th>
+<th>Thread 3</th>
+<th>Thread 4</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">1</td>
-<td style="text-align: left;">wait</td>
-<td style="text-align: left;">wait</td>
-<td style="text-align: left;">signal</td>
-<td style="text-align: left;">signal</td>
+<td>wait</td>
+<td>wait</td>
+<td>signal</td>
+<td>signal</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
-<td style="text-align: left;">R</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
+<td>R</td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">0</td>
-<td style="text-align: left;">D</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
+<td>D</td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">R</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
+<td></td>
+<td>R</td>
+<td></td>
+<td></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">B</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
+<td></td>
+<td>B</td>
+<td></td>
+<td></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">R</td>
-<td style="text-align: left;"></td>
+<td></td>
+<td></td>
+<td>R</td>
+<td></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">U2</td>
-<td style="text-align: left;"></td>
+<td></td>
+<td></td>
+<td>U2</td>
+<td></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">D</td>
-<td style="text-align: left;"></td>
+<td></td>
+<td></td>
+<td>D</td>
+<td></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">D</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
+<td></td>
+<td>D</td>
+<td></td>
+<td></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">R</td>
+<td></td>
+<td></td>
+<td></td>
+<td>R</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">1</td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;"></td>
-<td style="text-align: left;">D</td>
+<td></td>
+<td></td>
+<td></td>
+<td>D</td>
 </tr>
 </tbody>
 </table>
@@ -2582,12 +2584,12 @@ Analoges Vorgehen für `signal`.
 
 Wie verwalten wir die blockierten `wait`s/`signal`s? Am besten in einer
 dynamisch wachsenden Liste, die wir als Schlange
-(`queue'') benutzen (siehe`fairness'').
+(`queue'') benutzen (siehe`fairness’’).
 
 Wie informieren wir blockierte `wait`s/`signal`s, dass sie fortfahren
 dürfen? Wir missbrauchen unseren Mutex. Ein blockierter `wait`/`signal`
 führt
-`unlock'' aus. Der Thread der den blockierten Thread wieder fortfahren läßt führt`lock''
+`unlock'' aus. Der Thread der den blockierten Thread wieder fortfahren läßt führt`lock’’
 aus.
 
 ### Warteliste für blockierte `wait`s/`signal`s
@@ -2720,7 +2722,7 @@ erlaubt es einem blockierten `signal` fortzufahren.
 
 ### Alternative Quantifizierter Semaphor Implementierung
 
-Die Liste der "blocked" `wait`s und `signal`s modelliert eine
+Die Liste der “blocked” `wait`s und `signal`s modelliert eine
 Warteschlange. Intern verwendet Go solche Warteschlange im Falle von
 blockierten Sendern/Empfängern eines synchronen Kanals. Eine kürzere und
 direkte Implementierung der quantifizierten Semaphor ist deshalb wie
@@ -2740,7 +2742,7 @@ Ein blockierter `signal` Aufruf wartet auf `signalSignals`. Ein `wait`
 Aufruf testet, ob es blockierte `signal`s gibt.
 
 Beachte. Da es entweder `wait` und `signal` nie gleichzeitig blockiern,
-könnte anstatt `signalWaits` und `signalSignal` ein "signal" ausreichen.
+könnte anstatt `signalWaits` und `signalSignal` ein “signal” ausreichen.
 
 ### Kompletter Source Code der Alternative
 
@@ -2833,7 +2835,7 @@ Was könnte der Vorteil der ersten über der zweiten Lösung sein?
 
 ### Ausnutzung von Nebenläufigkeit
 
-Nebenläufige Konzepte (Threads, Kanäle, ...) dienen zur Strukturierung
+Nebenläufige Konzepte (Threads, Kanäle, …) dienen zur Strukturierung
 komplexer Problemstellungen, wobei Teile von einander unabhängig
 (nebenläufig) ablaufen können.
 
@@ -2847,17 +2849,17 @@ Teile können parallel ausgeführt werden?
 
 Im Falle der ersten Lösung, wartet jeder blockierte Thread auf ein auf
 den Thread bezogen eindeutiges Signal. Deshalb ist es möglich, dass
-gleichzeitig mehreren Threads ein "darf fortfahren" Signal geschickt
-wird. Im Falle der zweiten Lösung werden die "darf fortfahren" Signale
+gleichzeitig mehreren Threads ein “darf fortfahren” Signal geschickt
+wird. Im Falle der zweiten Lösung werden die “darf fortfahren” Signale
 sequentiell (nacheinander) abgearbeitet.
 
 Beachte. Der Flaschenhals ist natürlich der Zugriff auf die
 Warteschlange welcher auch in der ersten Lösung strikt nacheinander
-geschieht. Das "darf fortfahren" Signal aber kann gleichzeitg
+geschieht. Das “darf fortfahren” Signal aber kann gleichzeitg
 losgeschickt werden.
 
 Als eine weitere Steigerung der Nebenläufigkeit der ersten Lösung,
-könnten wir das "darf fortfahren" Signal in einem eigenen Thread
+könnten wir das “darf fortfahren” Signal in einem eigenen Thread
 losschicken.
 
     func wait(qsem *QSem) {
@@ -2868,7 +2870,7 @@ losschicken.
      ...
     }
 
-Dadurch kann der "main" Thread schon mit seiner Arbeit fortfahren. Die
+Dadurch kann der “main” Thread schon mit seiner Arbeit fortfahren. Die
 Aufgabe des Signals losschicken wird von einem Hilfsthread erledigt.
 
 Beachte. Da Google Go (zum Teil) kooperatives Scheduling benutzt kann es
@@ -2948,7 +2950,7 @@ Zur Wiederhohlung, die einfache Version.
 
 ## Lösungsvorschläge
 
-Zweiter 'barber' Thread.
+Zweiter ‘barber’ Thread.
 
     func main() {
 
@@ -2963,9 +2965,9 @@ Zweiter 'barber' Thread.
 
     }
 
-Kanal 'waitQ' ist der Flaschhals.
+Kanal ‘waitQ’ ist der Flaschhals.
 
-Idee, designierter Kanal pro 'barber'. Auswahl von 'customer' via
+Idee, designierter Kanal pro ‘barber’. Auswahl von ‘customer’ via
 select. Priorisierung möglich.
 
 # Aufgabe: Erweiterung Sleeping Barber II
@@ -3325,7 +3327,7 @@ Hier ist ein weiterer Versuch.
 Verhungerung (starvation) ist weiterhin möglich. Beispiel 1 ist auch
 anwendbar auf Version 2.
 
-Ist eine Verklemmung (deadlock) immer noch möglich? Nein, ein 'deadlock'
+Ist eine Verklemmung (deadlock) immer noch möglich? Nein, ein ‘deadlock’
 wird vermieden. Falls eine zweite Gabel nicht verfügbar, wird die erste
 Gabel zurückgelegt.
 
@@ -3428,8 +3430,9 @@ group of elves and a group of reindeer waiting.
 
 -   Our goal is to encode the santa claus problem in GoLang
 
--   Next, we will incrementally develop the various solution parts. The
-    complete solution can be found at the end.
+-   Next, we will incrementally develop the various solution parts.
+
+    The complete solution can be found at the end.
 
 ## Channels to represent elves and deers
 
@@ -3439,7 +3442,7 @@ size.
         deers := make(chan int, 9)
         elves := make(chan int, 10)
 
-Initially, all elves and deers are available, i.e. released from any of
+Initially, all elves and deers are available, i.e. released from any of
 their duties.
 
         release(deers, 9)
@@ -3479,7 +3482,7 @@ respective channel.
             }
 
 The `select` statement allows us to check if there is any deer or elf
-available. If there's none, we simply wait.
+available. If there’s none, we simply wait.
 
             if numOfDeersSeen == 9 {
                 fmt.Print("Deliver toys \n")
@@ -3513,7 +3516,7 @@ What about the priority rule?
 Santa gives priority to the reindeer in the case that there is both a
 group of elves and a group of reindeer waiting.
 
-Let's run some tests
+Let’s run some tests
 
     R&D
     R&D
@@ -3531,10 +3534,10 @@ Let's run some tests
     R&D
     R&D
 
-It seems that we're more likely to perform R&D than delivering of toys,
-even in case there's a group of nine deers waiting.
+It seems that we’re more likely to perform R&D than delivering of toys,
+even in case there’s a group of nine deers waiting.
 
-But don't we favor deers in the `select` statement? Recall
+But don’t we favor deers in the `select` statement? Recall
 
             select {
             case <-deers:
@@ -3545,7 +3548,7 @@ But don't we favor deers in the `select` statement? Recall
             }
 
 It seems that we first check for a waiting deer by performing a receive
-over the `deers` channel. If there's a deer available (in the `deers`
+over the `deers` channel. If there’s a deer available (in the `deers`
 channel buffer), then the receive statement will unblock. We say that
 the event (here receive) takes place. However, the above textual order
 is misleading.
@@ -3554,7 +3557,7 @@ In case several events can take place, here either a waiting deer or
 elf, one of the events will be chosen *indeterministically*. The choice
 does not depend on the textual order!
 
-Hence, it is entirely possible that there's a waiting deer *and* a
+Hence, it is entirely possible that there’s a waiting deer *and* a
 waiting elf but we will favor the elf. So, what can we do to favor
 deers?
 
@@ -3578,12 +3581,12 @@ at the moment). We can make use of `default` as follows.
 
             }
 
-If we favor an elf, we immediately check (nested `select`) if there's
-also a waiting deer. If there's none, we will choose the `default` case.
+If we favor an elf, we immediately check (nested `select`) if there’s
+also a waiting deer. If there’s none, we will choose the `default` case.
 Thus, we give priority to the reindeer in the case that there is both a
 group of elves and a group of reindeer waiting.
 
-Here's a sample run for the above variant. As we can seen, delivering
+Here’s a sample run for the above variant. As we can seen, delivering
 toys takes now place more frequently.
 
     R&D
@@ -3633,7 +3636,7 @@ Consider the following variant
 -   On the other hand, the order in which elves are arrive destroyed but
     putting the elf we have seen back into the channel (queue).
 
-Here's yet another alternative.
+Here’s yet another alternative.
 
             select {
             case <-deers:
@@ -3661,7 +3664,7 @@ In our current solution
 is done sequentially.
 
 That is, while santa performs a certain task with a group, the other
-group is blocked. It's more realistic that meanwhile the other group
+group is blocked. It’s more realistic that meanwhile the other group
 continues.
 
 For example, consider the following scenario:
@@ -3799,6 +3802,7 @@ improvements are yet incorporated.
     Tony Hoare
 
 -   Verwandte Sprachen (die es zum grossen Teil besser können):
+
     -   Concurrent ML
     -   Haskell
     -   Scala
@@ -3816,4 +3820,4 @@ improvements are yet incorporated.
 
 -   Ausblick
 
-    -   Programmanalyse zum Erkennen von Deadlock, ...
+    -   Programmanalyse zum Erkennen von Deadlock, …
