@@ -27,6 +27,7 @@ description: Martin Sulzmann
     -   Was alles schief gehen kann
     -   Weitere Aufgaben und Zusammenfassung
 -   Dynamic data race prediction
+    -   [Overview](./lec-data-race-overview.html)
     -   [Happens-before Methode](./lec-hb-vc.html)
     -   [Lockset Methode](./lec-lockset.html)
 -   [Deadlock Analyse](./lec-deadlock.html)
@@ -41,6 +42,9 @@ description: Martin Sulzmann
 -   [Weitere Beispiele](./weitereBeispiele.html)
 -   [Go - kurz und knapp](./lec-go-compact.html)
 
+[GitHub Order mit markdown und Programmen aus der
+Vorlesung](https://github.com/sulzmann/AutonomeSysteme/tree/master/WiSe23-24)
+
 # Semesterablauf
 
 -   Vorlesung, E301, Donnerstags 11:30-13:00 und auf
@@ -48,25 +52,36 @@ description: Martin Sulzmann
 
 -   Tutorium, E301, Donnerstags 13:00-14:00
 
-Ungefährer Ablauf siehe unten. Details siehe Forum
+Wöchentlicher Ablauf.
 
 -   W1, 25.09-01.10
     -   Intro
     -   Go multi-threading, Kanal-basierte Kommunikation
 -   W2, 02.10-08.10 (03.10 public holiday)
     -   Kanal-basierte Kommunikation
+    -   Mutex und Semaphore
 -   W3, 09.10-15.10
+    -   Fork/Join, Barrier
     -   Kanäle von Kanälen
     -   Nichtdeterministische Auswahl (“select”)
 -   W4, 16.10-22.10
+    -   Wiederholung: select, “publish-subscribe” Beispiel
     -   Was alles schief gehen kann
--   W5, 23.10-29.10
     -   Deadlock, Starvation, Livelock
     -   Problem der speisenden Philosophen
+    -   Kein Tutorium diese Woche
+    -   Ab 13:00 “Vorlesungsbesuch High Speed Karlsruhe”
+-   W5, 23.10-29.10
+    -   Wiederholung (Fehlerszenarien, Programmspuren)
+    -   Dynamische Data Race Erkennung (Overview)
 -   W6, 30.10-05.11 (01.11 public holiday)
-    -   Keine Vorlesung
+    -   Keine Vorlesung aber Tutorium
 -   W7, 06.11-12.11
     -   Dynamische Data Race Erkennung
+        -   Program, Lock Semantics, Last Writer Condition
+        -   Lamport’s Happpes-before Relation
+        -   Mengen-basierte Darstellung (“set-based data race
+            predictor”)
 -   W8, 13.11-19.11
     -   Dynamische Data Race Erkennung
 -   W9, 20.11-26.11

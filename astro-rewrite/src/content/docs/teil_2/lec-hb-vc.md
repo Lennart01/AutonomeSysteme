@@ -136,10 +136,15 @@ For a reordering to be valid the following rules must hold:
 1.  The elements in the reordered trace must be part of the original
     trace.
 
-2.  The order among elements for a given trace cannot be changed.
+2.  The order among elements for a given trace cannot be changed. See
+    The Program Order Condition.
 
 3.  For each release event rel(y) there must exist an earlier acquire
-    event acq(y) such there is no event rel(y) in between.
+    event acq(y) such there is no event rel(y) in between. See the Lock
+    Semantics Condition.
+
+4.  Each read must have the same *last writer*. See the Last Writer
+    Condition.
 
 A valid reordering only needs to include a subset of the events of the
 original trace.
