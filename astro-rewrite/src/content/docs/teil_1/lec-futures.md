@@ -5,7 +5,7 @@ description: Martin Sulzmann
 
 
 
-# Overview
+## Overview
 
 Futures and promises are a high-level concurrency construct to support
 asynchronous programming. A future can be viewed as a placeholder for a
@@ -22,7 +22,7 @@ provided by the programmer. For a high-level overview, see
 3.  We improve the implementation by reducing the number of goroutines.
     This leads to the concept of a promise.
 
-# Channel-based futures
+## Channel-based futures
 
     type Comp struct {
         val    interface{}
@@ -142,7 +142,7 @@ request. While waiting for the request, we can “do something else”.
 
     }
 
-# More expressive functionality for futures
+## More expressive functionality for futures
 
 Suppose we fire up several http requests (say stern and spiegel) and
 would like to retrieve the first available request. How can this be
@@ -495,7 +495,7 @@ any type.
         example3()
     }
 
-# Generics to the rescue
+## Generics to the rescue
 
     type Comp[T any] struct {
         val    T
@@ -751,7 +751,7 @@ any type.
         // example3()
     }
 
-# Discussion
+## Discussion
 
 -   Each future implies a goroutine.
 
@@ -782,7 +782,7 @@ Idea:
     -   We can immediately apply the “future” value and process the
         callback.
 
-# Futures via Promises
+## Futures via Promises
 
     type Promise[T any] struct {
         val           T

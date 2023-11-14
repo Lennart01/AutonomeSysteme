@@ -5,7 +5,7 @@ description: Martin Sulzmann
 
 
 
-# Motivation
+## Motivation
 
 ## Formal reasoning?
 
@@ -143,7 +143,7 @@ What about UML?
     -   Use a model with a *logic-based* flavor for specification ("What
         is the intended behavior?").
 
-# State-Based Modeling
+## State-Based Modeling
 
 ## Finite State Machines (FSM)
 
@@ -174,7 +174,7 @@ see black board
 
 ### Zustandsbasierte Modellierung
 
-    #include "stdio.h"
+    ##include "stdio.h"
 
     /*
 
@@ -419,7 +419,7 @@ Synchronization via hand-shake.
 
 "black-board"
 
-# Temporal specification
+## Temporal specification
 
 ## Motivation
 
@@ -588,7 +588,7 @@ which are obtained by execution of the CFSM.
 
     w |= next L       iff w^1 |= L
 
-# Model checking
+## Model checking
 
 Check if a model meets a specification.
 
@@ -686,7 +686,7 @@ Safety](https://users.ece.cmu.edu/~koopman/pubs/koopman14_toyota_ua_slides.pdf)
 [Spin - a popular model
 checker](http://spinroot.com/spin/whatispin.html)
 
-# UPPAAL
+## UPPAAL
 
 [UPPAAL](www.uppaal.org/) is a modelchecker with a graphical language
 for modeling based on Communicating Finite State Machines (CFSM) and a
@@ -919,7 +919,7 @@ Pro: We no longer require a "busy-waiting" loop.
 Cons: Codeduplication (because states are combined with guard
 conditions).
 
-#### Complete (final try) code with user
+### Complete (final try) code with user
 
     // Translating UPPAAL to Go
     // 
@@ -1138,7 +1138,7 @@ conditions).
             insert20, insert50, insert100)
     }
 
-# Static versus dynamic verification
+## Static versus dynamic verification
 
 ## Verification by example
 
@@ -1216,7 +1216,7 @@ example, via an inductive proof.
 
 This is just a selection
 
-# Issues (static verification)
+## Issues (static verification)
 
 ## False positives
 
@@ -1320,7 +1320,7 @@ negative**:
 2.  But the program is buggy.
 3.  The bug is missed because the model transformation is faulty.
 
-# Further examples for static verification
+## Further examples for static verification
 
 ### Type checking
 
@@ -1332,7 +1332,7 @@ Typically, false positives arise but not false negatives.
 These tools look for suspicious program parts by using syntax checks.
 False positives as well as false negatives may arise.
 
-# Dynamic verification
+## Dynamic verification
 
 We consider
 
@@ -1377,7 +1377,7 @@ Where does the oracle come from?
 2.  Stable release
 3.  ...
 
-# Trace-Based Runtime Verification (RV)
+## Trace-Based Runtime Verification (RV)
 
 Special instance where we are interested in the sequence of events
 (=trace) emitted by a program.
@@ -1498,7 +1498,7 @@ happen") whereas MC typically can also deal with *liveness* properties
         case e.kind == Read:
             s = "R"
         }
-        return (strconv.Itoa(e.threadId) + "#" + e.name + s)
+        return (strconv.Itoa(e.threadId) + "##" + e.name + s)
     }
 
     // Tracer

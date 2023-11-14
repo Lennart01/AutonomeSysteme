@@ -5,7 +5,7 @@ description: Martin Sulzmann
 
 
 
-# Programming language *models*
+## Programming language *models*
 
 -   Hide implementation details
 
@@ -50,7 +50,7 @@ Examples are:
 
 We show how each of the above can be expressed in terms of Go.
 
-# Mutex
+## Mutex
 
 Channels to implement a mutex.
 
@@ -166,7 +166,7 @@ Exercise: Consider various channel-based implemenatations.
 
     }
 
-# Fork/join
+## Fork/join
 
 Many concurrency patterns (“models”) can be emulated via channels. If
 possible, we would like to hide the (channel) implementation. As an
@@ -247,7 +247,7 @@ Exercise: Consider various channel-based implemenatations.
         exampleForkJoin2()
     }
 
-# Barrier
+## Barrier
 
 Wait for n tasks to finish.
 
@@ -332,7 +332,7 @@ Wait for n tasks to finish.
 
     }
 
-# Wait and notify
+## Wait and notify
 
 Java concurrency supports `wait` and `notify` methods to put a thread to
 sleep (via `wait`), and to wake up a thread (via `notify`).
@@ -521,7 +521,7 @@ customers will be notified by the barber to get a hair cut.
 
     }
 
-# Actors
+## Actors
 
 An *actor* represents a computational unit which responds to messages
 which can be sent from multiple sources. Sending a message to an actor
@@ -562,7 +562,7 @@ semantic subtleties to faithfully emulate actors in Go.
        We pattern match over the actor's mailbox and
        check for the first message that matches any of the cases.
 
-# Actors - Ping Pong Example
+## Actors - Ping Pong Example
 
 There are two actors:
 
@@ -623,7 +623,7 @@ via a helper thread. We could use buffered channels but still would need
 a helper thread as the buffer may be full and the send operation
 therefore potentially may block.
 
-# Actors - Santa Example
+## Actors - Santa Example
 
 We consider a variant of the “Santa Claus Problem”. We assume that there
 are three actors:
@@ -746,7 +746,7 @@ Points to note:
 
 -   Processing (receiving) of messages = switch-case statement
 
-# Actors - Santa Example II
+## Actors - Santa Example II
 
 We extend the example as follows. We assume there is another actor:
 
@@ -966,7 +966,7 @@ To summarize.
 
 -   We use select to test if one of the message patterns applies.
 
-# Actors - complete source code
+## Actors - complete source code
 
     package main
 
@@ -1460,7 +1460,7 @@ To summarize.
         santa2()
     }
 
-# Futures
+## Futures
 
 Futures and promises are a high-level concurrency construct to support
 asynchronous programming. A future can be viewed as a placeholder for a
@@ -1529,7 +1529,7 @@ the general idea and we will work out the details next.
     -   Only applies if the computation to produce the future result has
         failed.
 
-# Channel-based futures in Go
+## Channel-based futures in Go
 
     type Comp struct {
         val    interface{}
@@ -1648,7 +1648,7 @@ request. While waiting for the request, we can “do something else”.
 
     }
 
-# More expressive functionality for futures
+## More expressive functionality for futures
 
 Suppose we fire up several http requests (say stern and spiegel) and
 would like to retrieve the first available request. How can this be
@@ -1740,7 +1740,7 @@ first available request.
 
         time.Sleep(2 * time.Second)
 
-# Futures - complete source code
+## Futures - complete source code
 
     package main
 
@@ -1930,7 +1930,7 @@ first available request.
         example2()
     }
 
-# Summary
+## Summary
 
 In Go, we can support the following three concurrency models by
 emulating them via channels. Such emulations are useful to (a)

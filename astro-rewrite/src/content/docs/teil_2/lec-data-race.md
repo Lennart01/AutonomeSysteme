@@ -5,7 +5,7 @@ description: Martin Sulzmann
 
 
 
-# Overview
+## Overview
 
 We consider verification methods in the context of concurrently
 executing programs that make use of multiple threads, shared reads and
@@ -224,7 +224,7 @@ prediction methods:
 As we will see, the Lockset method is unsound whereas the Happens-before
 method is incomplete.
 
-# Run-time events, instrumentation and tracing
+## Run-time events, instrumentation and tracing
 
 We use the Go programming language here. For the purpose of data race
 prediction, we consider a simplified language that only supports
@@ -253,7 +253,7 @@ trace position 1. We write *e*, *f*, *g* to arbitrary events. We write
 Each event is connected to a thread where each thread is identified via
 a distinct thread id.
 
-We write *j*\#*e*<sub>*i*</sub> to denote event *e* at trace position
+We write *j*\##*e*<sub>*i*</sub> to denote event *e* at trace position
 *i* in thread *j*.
 
 We often use a tabular notation for traces where we introduce for each
@@ -262,7 +262,7 @@ the row number.
 
 Consider the trace
 
-\[1\#*w*(*x*)<sub>1</sub>, 1\#*a**c**q*(*y*)<sub>2</sub>, 1\#*r**e**l*(*y*)<sub>3</sub>, 2\#*a**c**q*(*y*)<sub>4</sub>, 2\#*w*(*x*)<sub>5</sub>, 2\#*r**e**l*(*y*)<sub>6</sub>\]
+\[1\##*w*(*x*)<sub>1</sub>, 1\##*a**c**q*(*y*)<sub>2</sub>, 1\##*r**e**l*(*y*)<sub>3</sub>, 2\##*a**c**q*(*y*)<sub>4</sub>, 2\##*w*(*x*)<sub>5</sub>, 2\##*r**e**l*(*y*)<sub>6</sub>\]
 
 and its tabular representation
 
@@ -284,7 +284,7 @@ events can be processed *online* in a stream-based fashion. A more
 detailed *offline* analysis, may get better results if the trace in its
 entire form is present.
 
-# Happens-before method
+## Happens-before method
 
 1.  Given a trace resulting from a specific program run.
 
@@ -299,7 +299,7 @@ The idea is that if *e* &lt; *f* then the operation connected to event
 
 The least requirement we impose on the (happens-before) ordering
 relation is that it is a [strict partial
-order](https://en.wikipedia.org/wiki/Partially_ordered_set#Strict_and_non-strict_partial_orders).
+order](https://en.wikipedia.org/wiki/Partially_ordered_set##Strict_and_non-strict_partial_orders).
 *Partial* means that not all events need be ordered. This is a sensible
 requirement. For example, consider events resulting from two distinct
 threads where there is no interaction among the threads. Then, we don't
@@ -578,21 +578,21 @@ trace I.
 
 ### Further reading
 
-#### [What Happens-After the First Race?](https://arxiv.org/pdf/1808.00185.pdf)
+### [What Happens-After the First Race?](https://arxiv.org/pdf/1808.00185.pdf)
 
 Shows that the "first" race reported by Lamport's happens-before
 relation is sound.
 
-#### [ThreadSanitizer](https://github.com/google/sanitizers/wiki/ThreadSanitizerCppManual)
+### [ThreadSanitizer](https://github.com/google/sanitizers/wiki/ThreadSanitizerCppManual)
 
 C/C++ implementation of Lamport's happens-before relation (to analyze
 C/C++).
 
-#### [Go's data race detector](https://golang.org/doc/articles/race_detector)
+### [Go's data race detector](https://golang.org/doc/articles/race_detector)
 
 Based on ThreadSanitizer.
 
-# Lockset
+## Lockset
 
 A different method is based on the idea to compute the set of locks that
 are held when processing a read/write event. We refer to this set as the
@@ -711,7 +711,7 @@ This is impossible (and if we would try we would run into a deadlock).
 Hence, the lockset method is unsound and the above is an example of a
 false positive.
 
-# Comparing HB and Lockset
+## Comparing HB and Lockset
 
 The lockset method is complete but unsound. The HB method is incomplete
 and unsound. In practice, it appears that the lockset method gives rise
@@ -727,7 +727,7 @@ Prediction (extended version)](https://arxiv.org/abs/2004.06969).
 Next, we discuss how to implement the lockset and the HB method
 efficiently.
 
-# Lockset based data race predictor algorithm
+## Lockset based data race predictor algorithm
 
 We annotate the trace with lockset information.
 
@@ -1243,7 +1243,7 @@ lockset information.
 
     func displayEvt(e Event) string {
         s := displayEvtSimple(e)
-        s = strconv.Itoa((int)(e.thread())) + "#" + s + "_" + strconv.Itoa(e.loc())
+        s = strconv.Itoa((int)(e.thread())) + "##" + s + "_" + strconv.Itoa(e.loc())
         return s
     }
 
@@ -1257,7 +1257,7 @@ lockset information.
     }
 
     func showThread(i int) string {
-        //  return (strconv.Itoa(i) + "#")
+        //  return (strconv.Itoa(i) + "##")
         return ("T" + strconv.Itoa(i))
     }
 
@@ -1559,7 +1559,7 @@ lockset information.
         fmt.Printf("\ndone")
     }
 
-# Vector clock based data race predictor algorithms - Highlights
+## Vector clock based data race predictor algorithms - Highlights
 
 The HB and the lockset method can be implemented efficiently. The
 computation of locksets is rather straightforward. The HB method
@@ -1794,7 +1794,7 @@ both events appear to happen at the same time. This is a special case
 because the critical section marked by *a**c**q*(*y*)<sub>2</sub> and
 *r**e**l*(*y*)<sub>3</sub> is empty.
 
-# Vector clock based data race predictor algorithm - Offline Approach
+## Vector clock based data race predictor algorithm - Offline Approach
 
 We present the details of the vector clock data race predictor algorithm
 outlined earlier. For each event we compute its pre and post vector
@@ -1969,11 +1969,11 @@ we often write *V*<sub>1</sub> &lt; *V*<sub>2</sub> for short.
 
 Applying algorithm `VC_pre_post` on our running example yields the
 following annotated trace where thread ids are enumerated starting with
-0. We write 0# to denote the first thread and so on.
+0. We write 0## to denote the first thread and so on.
 
     Trace A:
 
-          0#                    1#
+          0##                    1##
 
     1. [1,0]_w(x)_[2,0]
     2. [2,0]_acq(y)_[3,0]
@@ -1988,7 +1988,7 @@ and their pre vector clocks \[1, 0\] and \[3, 2\]. We find
 
 Consider another trace on which we run algorithm `VC_pre_post`.
 
-       0#                  1#
+       0##                  1##
     1. [1,0]_acq(y)_[2,0]
     2. [2,0]_rel(y)_[3,0]
     3. [3,0]_w(x)_[4,0]
@@ -1997,7 +1997,7 @@ Consider another trace on which we run algorithm `VC_pre_post`.
     6.                     [2,3]_rel(y)_[2,4]
 
 We encounter the following write-write HB data race pair
-(0\#*w*(*x*)<sub>3</sub>,1\#*w*(*x*)<sub>5</sub>) because neither
+(0\##*w*(*x*)<sub>3</sub>,1\##*w*(*x*)<sub>5</sub>) because neither
 \[3, 0\] &lt; \[2, 2\] nor \[2, 2\] &lt; \[3, 0\] holds. That is, we
 find that !*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[3,0\],\[2,2\]) and
 !*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[2,2\],\[3,0\]).
@@ -2024,7 +2024,7 @@ time due to the second pass.
 This approach can also be only run offline as the whole trace needs to
 be available (because we record for each event its vector clock).
 
-# Vector clock based data race predictor algorithms - Online Approach
+## Vector clock based data race predictor algorithms - Online Approach
 
 We consider an *online* approach. While processing events we immediately
 report races. There is no longer the need to store pre vector clocks for
@@ -2131,7 +2131,7 @@ We consider a run of algorithm `VC_W_R` (and its extension
 post vector clock annotations. There are no reads, so we only consider
 *W*(*x*).
 
-       0#                  1#                        W(x)                    Race pairs
+       0##                  1##                        W(x)                    Race pairs
     1. [1,0]_acq(y)_[2,0]                            {}
     2. [2,0]_rel(y)_[3,0]                            {}
     3. [3,0]_w(x)_[4,0]                              { [3,0] }
@@ -2146,7 +2146,7 @@ data race pairs while processing events.
 Consider another trace. As before we annotate the trace with the
 information collected by `VC_pre_post` and `VC_W_R_Races`.
 
-       0#                  1#                   W(x)                   Race pairs
+       0##                  1##                   W(x)                   Race pairs
     1. [1,0]_w(x)_[2,0]                        { [1,0] }
     2. [2,0]_w(x)_[3,0]                        { [2,0] }
     3.                     [0,1]_w(x)_[0,2]    { [2,0], [0,1] }       ([2,0], [0,1])
@@ -2386,11 +2386,11 @@ Based on the above lemma, instead of vector clocks we use sets of
 epochs.
 
 An **epoch** is a pair of a thread id *j* and time stamp *k*, written
-*j*\#*k*.
+*j*\##*k*.
 
 Each write/read event can be uniquely identified by an epoch. Suppose
 *V* is the pre vector clock of read/write in thread *i*. Then, the
-read/write's epoch is *i*\#*V*(*i*).
+read/write's epoch is *i*\##*V*(*i*).
 
 We adapt algorithm `VC_RaceLoc` as follows. Instead of *W**v*(*x*) and
 *R**v*(*x*), we use set *W**e*(*x*) where *W**e*(*x*) maintains a set of
@@ -2411,15 +2411,15 @@ two events are in happens-before relation. We only compare their epochs.
     }
 
     read(i,x) {
-      Re(x) = { i # Th(i)(i) } cup { j # k | j # k in Re(x) /\ k > Th(i)(j) }
-      If exists j # k in We(x) such that k > Th(i)(j) then Th(i) is part of a write-read data race
+      Re(x) = { i ## Th(i)(i) } cup { j ## k | j ## k in Re(x) /\ k > Th(i)(j) }
+      If exists j ## k in We(x) such that k > Th(i)(j) then Th(i) is part of a write-read data race
       Th(i) = inc(Th(i), i)
     }
 
     write(i,x) {
-      If exists j # k in Re(x) such that k > Th(i)(j) then Th(i) is part of a write-read data race
-      If exists j # k in We(x) such that k > Th(i)(j) then Th(i) is part of a write-write data race
-      We(x) = { i # Th(i)(i) } cup { j # k | j # k in We(x) /\ k > Th(i)(j) }
+      If exists j ## k in Re(x) such that k > Th(i)(j) then Th(i) is part of a write-read data race
+      If exists j ## k in We(x) such that k > Th(i)(j) then Th(i) is part of a write-write data race
+      We(x) = { i ## Th(i)(i) } cup { j ## k | j ## k in We(x) /\ k > Th(i)(j) }
       Wv(x) = sync(Wv(x), Th(i))
       Th(i) = inc(Th(i), i)
     }
@@ -2455,7 +2455,7 @@ happens-before we consider an adaptive approach where we switch between
 an epoch and a vector clock (representing a set of epochs).
 
 We write \[0, ..., 0\] to denote an initially zeroed vector clock. We
-write \[*j*\#*k*, *i*\#*l*\] to denote a vector clock where entry *j*
+write \[*j*\##*k*, *i*\##*l*\] to denote a vector clock where entry *j*
 has time stamp *k*, entry *i* has time stamp *l* and all other time
 stamps are zeroed.
 
@@ -2481,25 +2481,25 @@ notation to distinguish between the two cases.
     read(i,x) {
       // check for write-read races
       switch Wh(x) {
-        case j # k:
+        case j ## k:
            if k < Th(i)(j)
-           then write-read race pair (j # k, i # Th(i)(i))
+           then write-read race pair (j ## k, i ## Th(i)(i))
 
         case V:
            if !(V < Th(i))
-           then read i # Th(i)(i) is part of a write-read race
+           then read i ## Th(i)(i) is part of a write-read race
       }
 
       // adaptive update Rh(x)
       switch Rh(x) {
-        case j # k:
+        case j ## k:
            if k < Th(i)(j)
-           then Rh(x) = [ j # k, i # Th(i)(i) ]
-           else Rh(x) = i # Th(i)(i)
+           then Rh(x) = [ j ## k, i ## Th(i)(i) ]
+           else Rh(x) = i ## Th(i)(i)
 
         case V:
            if V < Th(i)
-           then Rh(x) = i # Th(i)(i)
+           then Rh(x) = i ## Th(i)(i)
            else V(i) = Th(i)(i)
                 Rh(x) = V
 
@@ -2510,35 +2510,35 @@ notation to distinguish between the two cases.
     write(i,x) {
       // check for write-write races
       switch Wh(x) {
-        case j # k:
+        case j ## k:
            if k < Th(i)(j)
-           then write-write race pair (j # k, i # Th(i)(i))
+           then write-write race pair (j ## k, i ## Th(i)(i))
         case V:
            if !(V < Th(i))
-           then write i # Th(i)(i) is part of a write-write race
+           then write i ## Th(i)(i) is part of a write-write race
       }
 
       // check for read-write races
       switch Rh(x) {
-        case j # k:
+        case j ## k:
            if k < Th(i)(j)
-           then read-write race pair (j # k, i # Th(i)(i))
+           then read-write race pair (j ## k, i ## Th(i)(i))
 
         case V:
            if !(V < Th(i))
-           then write i # Th(i)(i) is part of a read-write race
+           then write i ## Th(i)(i) is part of a read-write race
       }
 
       // adaptive update Wh(x)
       switch Wh(x) {
-        case j # k:
+        case j ## k:
            if k < Th(i)(j)
-           then Rh(x) = [ j # k, i # Th(i)(i) ]
-           else Rh(x) = i # Th(i)(i)
+           then Rh(x) = [ j ## k, i ## Th(i)(i) ]
+           else Rh(x) = i ## Th(i)(i)
 
         case V:
            if V < Th(i)
-           then Wh(x) = i # Th(i)(i)
+           then Wh(x) = i ## Th(i)(i)
            else V(i) = Th(i)(i)
                 Wh(x) = V
       }
@@ -2571,8 +2571,8 @@ algorithm implements a semi-adaptive approach.
 
     Algorithm FastTrack style:
     Initially,
-      Rh(x) = 0 # 0
-      Ws(x) = 0 # 0
+      Rh(x) = 0 ## 0
+      Ws(x) = 0 ## 0
 
     acq(i,y) {
       Th(i) = sync(Rel(y), Th(i))
@@ -2587,17 +2587,17 @@ algorithm implements a semi-adaptive approach.
     read(i,x) {
       // check for write-read races
       switch Ws(x) {
-        case j # k:
+        case j ## k:
            if k < Th(i)(j)
-           then write-read race pair (j # k, i # Th(i)(i))
+           then write-read race pair (j ## k, i ## Th(i)(i))
       }
 
       // semi-adaptive update Rh(x)
       switch Rh(x) {
-        case j # k:
+        case j ## k:
            if k < Th(i)(j)
-           then Rh(x) = [ j # k, i # Th(i)(i) ]
-           else Rh(x) = i # Th(i)(i)
+           then Rh(x) = [ j ## k, i ## Th(i)(i) ]
+           else Rh(x) = i ## Th(i)(i)
 
         case V:
            V(i) = Th(i)(i)
@@ -2610,24 +2610,24 @@ algorithm implements a semi-adaptive approach.
     write(i,x) {
       // check for write-write races
       switch Ws(x) {
-        case j # k:
+        case j ## k:
            if k < Th(i)(j)
-           then write-write race pair (j # k, i # Th(i)(i))
+           then write-write race pair (j ## k, i ## Th(i)(i))
       }
 
       // check for read-write races
       switch Rh(x) {
-        case j # k:
+        case j ## k:
            if k < Th(i)(j)
-           then read-write race pair (j # k, i # Th(i)(i))
+           then read-write race pair (j ## k, i ## Th(i)(i))
 
         case V:
            if !(V < Th(i))
-           then write i # Th(i)(i) is part of a read-write race
+           then write i ## Th(i)(i) is part of a read-write race
       }
 
       // update Ws(x)
-      Ws(x) = i # Th(i)(i)
+      Ws(x) = i ## Th(i)(i)
 
       Th(i) = inc(Th(i), i)
     }
@@ -2674,7 +2674,7 @@ programs](https://dl.acm.org/doi/10.1145/781498.781529)
 
 Both are the same, any differences?
 
-# Implementation in Go
+## Implementation in Go
 
     package main
 
@@ -2934,7 +2934,7 @@ Both are the same, any differences?
 
     func displayEvt(e Event) string {
         s := displayEvtSimple(e)
-        s = strconv.Itoa((int)(e.thread())) + "#" + s + "_" + strconv.Itoa(e.loc())
+        s = strconv.Itoa((int)(e.thread())) + "##" + s + "_" + strconv.Itoa(e.loc())
         return s
     }
 
@@ -2955,7 +2955,7 @@ Both are the same, any differences?
         // Add column headings.
         heading := "   "
         for i := 0; i <= m; i++ {
-            heading += strconv.Itoa(i) + "#" + strings.Repeat(" ", ROW_OFFSET-2)
+            heading += strconv.Itoa(i) + "##" + strings.Repeat(" ", ROW_OFFSET-2)
         }
         s = heading + s
 

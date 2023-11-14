@@ -5,7 +5,7 @@ description: Martin Sulzmann
 
 
 
-# Overview
+## Overview
 
 Our assumptions are:
 
@@ -68,7 +68,7 @@ Goodlock can only deal with two threads.
 Introduces lock graphs, a generalization of lock trees. Lock graphs are
 capable of checking for deadlocks among three threads and more.
 
-# Examples
+## Examples
 
 We explain the idea of dynamic deadlock predication based on lock graphs
 via several examples. The lock graph construction is as follows.
@@ -124,7 +124,7 @@ As we can see, all threads are blocked =&gt; deadlock!
 
 If there’s a cycle in the lock graph, there’s a potential deadlock.
 
-# Precision
+## Precision
 
 How *precise* is the analysis method based on lockgraphs?
 
@@ -187,7 +187,7 @@ reordering under which we run into a deadlock.
 The above is an example of a *cross-thread* critical section that
 includes several events.
 
-# Go-style mutexes behave like semaphores
+## Go-style mutexes behave like semaphores
 
 So far, we assumed that a thread that acquires lock x must also release
 x. This assumption holds for Java and C++. However, Go-style mutexes
@@ -258,7 +258,7 @@ We conclude:
 -   Deadlock prediction based on lockgraph results then in further false
     positives
 
-# [ThreadSanitizer (TSan)](https://github.com/google/sanitizers/wiki/ThreadSanitizerDeadlockDetector)
+## [ThreadSanitizer (TSan)](https://github.com/google/sanitizers/wiki/ThreadSanitizerDeadlockDetector)
 
 Lock graph based deadlock detector. Not much is known about what has
 been implemented. Certainly a fairly naive implementation.
@@ -284,7 +284,7 @@ been implemented. Certainly a fairly naive implementation.
 
 TSan reports a deadlock but this is a clear false positive.
 
-# Summary
+## Summary
 
 -   Dynamic deadlock prediction based on lock graphs.
 
@@ -299,7 +299,7 @@ TSan reports a deadlock but this is a clear false positive.
 -   On-going research to reduce the amount of false positives and false
     negatives.
 
-# Appendix: Some implementation in Go
+## Appendix: Some implementation in Go
 
 Here comes a simple implementation for dynamic deadlock prediction based
 on lock graphs.

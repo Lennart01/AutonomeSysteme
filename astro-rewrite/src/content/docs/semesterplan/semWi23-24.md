@@ -18,8 +18,8 @@ description: Martin Sulzmann
 
 ## Vorlesungsunterlagen
 
--   [Overview](./overview.html)
--   [Concurrency in Go](./lec-concurrency-go.html)
+-   [Overview](./../../overview/overview)
+-   [Concurrency in Go](./../../teil_1/lec-concurrency-go)
     -   Go multi-threading, Kanal-basierte Kommunikation
     -   Synchrone versus Asynchrone Kommunikation
     -   Kanäle von Kanälen
@@ -27,25 +27,25 @@ description: Martin Sulzmann
     -   Was alles schief gehen kann
     -   Weitere Aufgaben und Zusammenfassung
 -   Dynamic data race prediction
-    -   [Overview](./lec-data-race-overview.html)
-    -   [Happens-before Methode](./lec-hb-vc.html)
-    -   [Lockset Methode](./lec-lockset.html)
--   [Deadlock Analyse](./lec-deadlock.html)
--   [Concurrency models](./lec-concurrency-models.html)
+    -   [Overview](./../../teil_2/lec-data-race-overview)
+    -   [Happens-before Methode](./../../teil_2/lec-hb-vc)
+    -   [Lockset Methode](./../../teil_2/lec-lockset)
+-   [Deadlock Analyse](./../../teil_2/lec-deadlock)
+-   [Concurrency models](./../../teil_1/lec-concurrency-models)
     -   mutex
     -   fork/join
     -   barrier
     -   wait/notify
     -   actors
     -   futures und Zusammenfassung
-    -   [Mehr zu futures und promises](./lec-futures.html)
--   [Weitere Beispiele](./weitereBeispiele.html)
--   [Go - kurz und knapp](./lec-go-compact.html)
+    -   [Mehr zu futures und promises](./../../teil_1/lec-futures)
+-   [Weitere Beispiele](./../../teil_2/weiterebeispiele)
+-   [Go - kurz und knapp](./../../teil_1/lec-go-compact)
 
 [GitHub Order mit markdown und Programmen aus der
 Vorlesung](https://github.com/sulzmann/AutonomeSysteme/tree/master/WiSe23-24)
 
-# Semesterablauf
+## Semesterablauf
 
 -   Vorlesung, E301, Donnerstags 11:30-13:00 und auf
     [zoom](https://h-ka-de.zoom-x.de/j/4837536496?pwd=dnlrTmVhWXlYOTFNMEhnYVNtRTJwZz09)
