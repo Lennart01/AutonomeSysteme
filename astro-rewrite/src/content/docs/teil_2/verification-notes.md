@@ -5,7 +5,7 @@ description: Martin Sulzmann
 
 
 
-# Dynamic Verification - Data Races and Deadlocks
+## Dynamic Verification - Data Races and Deadlocks
 
 Programs may show non-deterministic behavior (e.g. see concurrency).
 

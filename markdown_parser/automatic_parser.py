@@ -22,8 +22,14 @@ input_output = [
     html_object("lec-hb-vc.html", PWD + "teil_2/lec-hb-vc.md", "Dynamic data race prediction - Happens-before and vector clocks"),
     html_object("lec-deadlock.html", PWD + "teil_2/lec-deadlock.md", "Dynamic deadlock prediction"),
     html_object("verification-notes.html", PWD + "teil_2/verification-notes.md", "Dynamic verification - data races and deadlocks"),
+    html_object("lec-data-race-overview.html", PWD + "teil_2/lec-data-race-overview.md", "Dynamic data race prediction (Overview)"),
+    html_object("lec-lockset.html", PWD + "teil_2/lec-lockset.md", "Dynamic data race prediction - Locksets"),
+    html_object("weitereBeispiele.html", PWD + "teil_2/weitereBeispiele.md", "Weitere Beispiele"),
+    html_object("lec-go-compact.html", PWD + "teil_1/lec-go-compact.md", "Die Programmiersprache Go - Kurz und knapp"),
 
     html_object("uppaal.html", PWD + "uppaal/uppaal.md", "UPPAAL Labor"),
+
+
 ]
 
 
@@ -41,6 +47,25 @@ for obj in input_output:
 
         # replace dublicate title
         content = content.replace("# " + obj.title, "")
+
+        # fix all titles
+        content = content.replace("#", "##")
+        content = content.replace("###", "##")
+        content = content.replace("###", "##")
+        content = content.replace("####", "###")
+        content = content.replace("#####", "####")
+
+        # replace incorrect linkings
+        if "semesterplan" in obj.output_path:
+            # reset path
+            # content = content.replace("./", "../../")
+            # replace links based on the file name
+            # use the file names from above
+
+            for link in input_output:
+                path = "./" + link.path
+                content = content.replace(path, "./" + link.output_path.replace(PWD, "../../").lower())
+                content = content.replace(".md", "")
 
     with open(obj.output_path, "w") as f:
         f.write(content)

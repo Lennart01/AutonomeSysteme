@@ -5,7 +5,7 @@ description: Martin Sulzmann
 
 
 
-# Gegenstand der Vorlesung
+## Gegenstand der Vorlesung
 
 -   Autonome und reaktive Systeme
 
@@ -24,7 +24,7 @@ description: Martin Sulzmann
 
     -   Kommunikation und Synchronization
 
-# Konzepte und Methoden
+## Konzepte und Methoden
 
 Modellierung und Spezifikation
 
@@ -46,7 +46,7 @@ Mix aus Vorlesung und praktischen Übungen (Labor)
 Weiterführende Seminar-/Projektarbeiten, Bachelor/Master,
 Drittmittelprojekte, ...
 
-# Die Programmiersprache Go
+## Die Programmiersprache Go
 
 Nix neues. Altbekanntes und bewährtes in einer C-artigen Sprache
 zusammengefasst.
@@ -107,7 +107,7 @@ Go inspiriert von
 
 -   [Concurrent ML](https://en.wikipedia.org/wiki/Concurrent_ML)
 
-# Deadlock (Verklemmung)
+## Deadlock (Verklemmung)
 
     package main
 
@@ -134,7 +134,7 @@ Go inspiriert von
 
     }
 
-# Data race
+## Data race
 
     package main
 
@@ -161,7 +161,7 @@ Go inspiriert von
 
     }
 
-# Fazit und Ausblick
+## Fazit und Ausblick
 
 -   Go hat ausdrucksstarke Konzepte zur nebenläufigen Programmierung
 

@@ -5,7 +5,7 @@ description: Martin Sulzmann
 
 
 
-# Overview
+## Overview
 
 ## Data race prediction
 
@@ -46,12 +46,12 @@ Some efficient representation for the happens-before relation.
 If two conflicting operations are unordered under the happens-before
 relation, then we report that these operations are in a (data) race.
 
-# Trace and event notation
+## Trace and event notation
 
-We write *j*\#*e*<sub>*i*</sub> to denote event *e* at trace position
+We write *j*\##*e*<sub>*i*</sub> to denote event *e* at trace position
 *i* in thread *j*.
 
-In plain text notation, we sometimes write `j#e_i`.
+In plain text notation, we sometimes write `j##e_i`.
 
 We assume the following events.
 
@@ -62,7 +62,7 @@ We assume the following events.
 
 Consider the trace
 
-\[1\#*w*(*x*)<sub>1</sub>,1\#*a**c**q*(*y*)<sub>2</sub>,1\#*r**e**l*(*y*)<sub>3</sub>,2\#*a**c**q*(*y*)<sub>4</sub>,2\#*w*(*x*)<sub>5</sub>,2\#*r**e**l*(*y*)<sub>6</sub>\]
+\[1\##*w*(*x*)<sub>1</sub>,1\##*a**c**q*(*y*)<sub>2</sub>,1\##*r**e**l*(*y*)<sub>3</sub>,2\##*a**c**q*(*y*)<sub>4</sub>,2\##*w*(*x*)<sub>5</sub>,2\##*r**e**l*(*y*)<sub>6</sub>\]
 
 and its tabular representation
 
@@ -84,7 +84,7 @@ events can be processed *online* in a stream-based fashion. A more
 detailed *offline* analysis, may get better results if the trace in its
 entire form is present.
 
-# Trace reordering
+## Trace reordering
 
 To predict if two conflicting operations are in a race we could
 *reorder* the trace. Reordering the trace means that we simply permute
@@ -188,25 +188,25 @@ We consider here Lamport’s happens-before (HB) relation that
 approximates the possible reorderings. The HB relation can be computed
 efficiently but may lead to false positives and false negatives.
 
-# Lamport’s happens-before (HB) relation
+## Lamport’s happens-before (HB) relation
 
 Let *T* be a trace. We define the HB relation `<` as the smallest
 [strict partial
-order](https://en.wikipedia.org/wiki/Partially_ordered_set#Strict_and_non-strict_partial_orders)
+order](https://en.wikipedia.org/wiki/Partially_ordered_set##Strict_and_non-strict_partial_orders)
 that satisfies the following conditions:
 
 **Program order**
 
-Let *j*\#*e*<sub>*i*</sub>, *j*\#*f*<sub>*i* + *n*</sub> ∈ *T* where
+Let *j*\##*e*<sub>*i*</sub>, *j*\##*f*<sub>*i* + *n*</sub> ∈ *T* where
 *n* &gt; 0. Then, we find that
-*j*\#*e*<sub>*i*</sub> &lt; *j*\#*f*<sub>*i* + *n*</sub>.
+*j*\##*e*<sub>*i*</sub> &lt; *j*\##*f*<sub>*i* + *n*</sub>.
 
 **Critical section order**
 
 Let
-*i*\#*r**e**l*(*x*)<sub>*k*</sub>, *j*\#*a**c**q*(*x*)<sub>*k* + *n*</sub> ∈ *T*
+*i*\##*r**e**l*(*x*)<sub>*k*</sub>, *j*\##*a**c**q*(*x*)<sub>*k* + *n*</sub> ∈ *T*
 where *i*! = *j* and *n* &gt; 0. Then, we find that
-*i*\#*r**e**l*(*x*)<sub>*k*</sub> &lt; *j*\#*a**c**q*(*x*)<sub>*k* + *n*</sub>.
+*i*\##*r**e**l*(*x*)<sub>*k*</sub> &lt; *j*\##*a**c**q*(*x*)<sub>*k* + *n*</sub>.
 
 -   Program order states that for a specific threads, events are ordered
     based on their trace position.
@@ -222,19 +222,19 @@ where *i*! = *j* and *n* &gt; 0. Then, we find that
 
 Consider the trace
 
-\[1\#*w*(*x*)<sub>1</sub>,1\#*a**c**q*(*y*)<sub>2</sub>,1\#*r**e**l*(*y*)<sub>3</sub>,2\#*a**c**q*(*y*)<sub>4</sub>,2\#*w*(*x*)<sub>5</sub>,2\#*r**e**l*(*y*)<sub>6</sub>\].
+\[1\##*w*(*x*)<sub>1</sub>,1\##*a**c**q*(*y*)<sub>2</sub>,1\##*r**e**l*(*y*)<sub>3</sub>,2\##*a**c**q*(*y*)<sub>4</sub>,2\##*w*(*x*)<sub>5</sub>,2\##*r**e**l*(*y*)<sub>6</sub>\].
 
 Via program order we find that
 
-1\#*w*(*x*)<sub>1</sub> &lt; 1\#*a**c**q*(*y*)<sub>2</sub> &lt; 1\#*r**e**l*(*y*)<sub>3</sub>
+1\##*w*(*x*)<sub>1</sub> &lt; 1\##*a**c**q*(*y*)<sub>2</sub> &lt; 1\##*r**e**l*(*y*)<sub>3</sub>
 
 and
 
-2\#*a**c**q*(*y*)<sub>4</sub> &lt; 2\#*w*(*x*)<sub>5</sub> &lt; 2\#*r**e**l*(*y*)<sub>6</sub>.
+2\##*a**c**q*(*y*)<sub>4</sub> &lt; 2\##*w*(*x*)<sub>5</sub> &lt; 2\##*r**e**l*(*y*)<sub>6</sub>.
 
 Via critical section order we find that
 
-1\#*r**e**l*(*y*)<sub>3</sub> &lt; 2\#*a**c**q*(*y*)<sub>4</sub>.
+1\##*r**e**l*(*y*)<sub>3</sub> &lt; 2\##*a**c**q*(*y*)<sub>4</sub>.
 
 Points to note.
 
@@ -242,7 +242,7 @@ Points to note.
 
 Hence, by transitivity we can also assume that for example
 
-1\#*w*(*x*)<sub>1</sub> &lt; 2\#*w*(*x*)<sub>5</sub>.
+1\##*w*(*x*)<sub>1</sub> &lt; 2\##*w*(*x*)<sub>5</sub>.
 
 ## Happens-before data race check
 
@@ -259,7 +259,7 @@ such a situation, we consider (*e*,*f*) and (*f*,*e*) as two distinct
 representative for the same data race. When reporting (and counting) HB
 data races we only consider a specific representative.
 
-# Event sets
+## Event sets
 
 Consider event *e*. We denote by *E**S*<sub>*e*</sub> the set of events
 that happen-before *e*. We assume that *e* is also included in
@@ -364,7 +364,7 @@ We write `e@operation` to denote that event `e` will be processed by
 
 ### Examples
 
-#### Race not detected
+### Race not detected
 
         T0            T1
 
@@ -402,7 +402,7 @@ set-based race predictor.
 
 -   If there are any reads we also show R(x)
 
-#### Race detected
+### Race detected
 
         T0            T1
 
@@ -429,7 +429,7 @@ Here’s the annotated trace.
     6.                acq(y)        D(T1) = [0:fork(T1)_1,0:acq(y)_2,0:wr(x)_3,0:rel(y)_4,1:wr(x)_5,1:acq(y)_6]
     7.                rel(y)        Rel(y) = [0:fork(T1)_1,0:acq(y)_2,0:wr(x)_3,0:rel(y)_4,1:wr(x)_5,1:acq(y)_6,1:rel(y)_7]
 
-#### Earlier race not detected
+### Earlier race not detected
 
         T0            T1
 
@@ -460,7 +460,7 @@ Here’s the annotated trace.
     7.                acq(y)        D(T1) = [0:fork(T1)_1,0:acq(y)_2,0:wr(x)_3,0:wr(x)_4,0:rel(y)_5,1:wr(x)_6,1:acq(y)_7]
     8.                rel(y)        Rel(y) = [0:fork(T1)_1,0:acq(y)_2,0:wr(x)_3,0:wr(x)_4,0:rel(y)_5,1:wr(x)_6,1:acq(y)_7,1:rel(y)_8]
 
-#### Read-write races
+### Read-write races
 
         T0            T1            T2
 
@@ -500,7 +500,7 @@ To check for a race we check if some element is in D(t).
 If there are n events, this means set-based race prediction requires
 O(n\*n) time.
 
-# From event sets to timestamps
+## From event sets to timestamps
 
 ## Timestamps
 
@@ -529,19 +529,19 @@ Let *e* be an event in thread *i* and *j* its timestamp.
 
 Then, we can uniquely identify *e* via *i* and *j*.
 
-We write *i*\#*j* to represent event *e*. In the literature, *i*\#*j* is
+We write *i*\##*j* to represent event *e*. In the literature, *i*\##*j* is
 referred to as an *epoch*.
 
 ## Example - Trace annotated with epochs
 
          T1          T2           Epochs
 
-    1.   w(x)                     1#1
-    2.   acq(y)                   1#2
-    3.   rel(y)                   1#3
-    4.               acq(y)       2#1
-    5.               w(x)         2#2
-    6.               rel(y)       2#3
+    1.   w(x)                     1##1
+    2.   acq(y)                   1##2
+    3.   rel(y)                   1##3
+    4.               acq(y)       2##1
+    5.               w(x)         2##2
+    6.               rel(y)       2##3
 
 We use the timestamp “before” processing the event. We could also use
 the timestamp “after” (but this needs to be done consistently).
@@ -551,37 +551,37 @@ the timestamp “after” (but this needs to be done consistently).
 Instead of events sets we record the set of epochs.
 
 We group together epochs belonging to the same thread. For example, in
-case of {1\#1, 1\#2} we write {1\#{1, 2}}.
+case of {1\##1, 1\##2} we write {1\##{1, 2}}.
 
 ## Example - Trace annotated with sets of epochs
 
          T1          T2            Sets of epochs
 
-    1.   w(x)                     {1#1}
-    2.   acq(y)                   {1#{1,2}}
-    3.   rel(y)                   {1#{1,2,3}}
-    4.               acq(y)       {1#{1,2,3}, 2#1}
-    5.               w(x)         {1#{1,2,3}, 2#{1,2}}
-    6.               rel(y)       {1#{1,2,3}, 2#{1,2,3}}
+    1.   w(x)                     {1##1}
+    2.   acq(y)                   {1##{1,2}}
+    3.   rel(y)                   {1##{1,2,3}}
+    4.               acq(y)       {1##{1,2,3}, 2##1}
+    5.               w(x)         {1##{1,2,3}, 2##{1,2}}
+    6.               rel(y)       {1##{1,2,3}, 2##{1,2,3}}
 
-# From sets of timestamps to vector clocks
+## From sets of timestamps to vector clocks
 
 Insight:
 
 For each thread only keep most recent timestamp.
 
-For example, in case of {1\#{1, 2}} we write {1\#2}
+For example, in case of {1\##{1, 2}} we write {1\##2}
 
 ## Example - Trace annotated with most recent timestamps
 
          T1          T2            Sets of most recent timestamps
 
-    1.   w(x)                     {1#1}
-    2.   acq(y)                   {1#2}
-    3.   rel(y)                   {1#3}
-    4.               acq(y)       {1#3, 2#1}
-    5.               w(x)         {1#3, 2#2}
-    6.               rel(y)       {1#3, 2#3}
+    1.   w(x)                     {1##1}
+    2.   acq(y)                   {1##2}
+    3.   rel(y)                   {1##3}
+    4.               acq(y)       {1##3, 2##1}
+    5.               w(x)         {1##3, 2##2}
+    6.               rel(y)       {1##3, 2##3}
 
 ## Vector clocks
 
@@ -608,12 +608,12 @@ If there’s no entry for a thread, we assume the timestamp 0.
 ## Mapping event sets to vector clocks
 
 Based on the above, each event set can be represented as the set
-({1\#*E*<sub>1</sub>, ..., *n*\#*E*<sub>*n*</sub>} where sets
+({1\##*E*<sub>1</sub>, ..., *n*\##*E*<sub>*n*</sub>} where sets
 *E*<sub>*j*</sub> are of the form {1, ..., *k*}.
 
 We define a mapping *Φ* from event sets to vector clocks as follows.
 
-*Φ*({1\#*E*<sub>1</sub>,...,*n*\#*E*<sub>*n*</sub>}) = \[*m**a**x*(*E*<sub>1</sub>),...,*m**a**x*(*E*<sub>*n*</sub>)\]
+*Φ*({1\##*E*<sub>1</sub>,...,*n*\##*E*<sub>*n*</sub>}) = \[*m**a**x*(*E*<sub>1</sub>),...,*m**a**x*(*E*<sub>*n*</sub>)\]
 
 ### Properties
 
@@ -623,7 +623,7 @@ We define a mapping *Φ* from event sets to vector clocks as follows.
 2.  *ϕ*(*D*<sub>*e*</sub>∪*D*<sub>*f*</sub>) = *s**y**n**c*(*ϕ*(*D*<sub>*e*</sub>),*ϕ*(*D*<sub>*f*</sub>))
 
 3.  Let *e*, *f* be two events where *e* appears before *f* and
-    *e* = *i*\#*k*. Then, *e* ∉ *D*<sub>*f*</sub> iff
+    *e* = *i*\##*k*. Then, *e* ∉ *D*<sub>*f*</sub> iff
     *k* &gt; *Φ*(*D*<sub>*f*</sub>)(*i*).
 
 We define &lt; and *s**y**n**c* for vector clocks as follows.
@@ -638,7 +638,7 @@ We define &lt; and *s**y**n**c* for vector clocks as follows.
 
     if ik<=jk for all k=1...n and there exists k such that ik<jk.
 
-# Vector clock based race detector a la [FastTrack](http://dept.cs.williams.edu/~freund/papers/fasttrack-7-2016.pdf)
+## Vector clock based race detector a la [FastTrack](http://dept.cs.williams.edu/~freund/papers/fasttrack-7-2016.pdf)
 
 Further vector clock operations.
 
@@ -704,18 +704,18 @@ Event processing.
       then write in a race with a read
 
       If W(x) exists
-      then let j#k = W(x)
+      then let j##k = W(x)
            if k > Th(t)(j)
            then write in a race with a write
       then write-write race (W(x),e)
 
-      W(x) = t#Th(t)(t)
+      W(x) = t##Th(t)(t)
       inc(Th(t),t)
     }
 
     read(t,x) {
       If W(x) exists
-      then let j#k = W(x)
+      then let j##k = W(x)
            if k > Th(t)(j)
            then read in a race with a write
       R(x) = sync(Th(t), R(x))
@@ -733,7 +733,7 @@ We include `fork` and `join` events.
 
 ## Examples (from before)
 
-#### Race not detected
+### Race not detected
 
         T0            T1
 
@@ -743,7 +743,7 @@ We include `fork` and `join` events.
     4.  rel(x)                      [4,0]
     5.                acq(x)        [1,1]
     6.                rel(x)        [4,2]
-    7.                wr(z)         [4,3]  W(z) = 0#3
+    7.                wr(z)         [4,3]  W(z) = 0##3
 
 -   For each event we annotate its vector clock
 
@@ -751,7 +751,7 @@ We include `fork` and `join` events.
 
 -   If there are any reads we also show R(x)
 
-#### Race detected
+### Race detected
 
         T0            T1
 
@@ -759,24 +759,24 @@ We include `fork` and `join` events.
     2.  acq(x)                      [2,0]
     3.  wr(z)                       [3,0]  W(z) = undefined
     4.  rel(x)                      [4,0]
-    5.                wr(z)         [1,1]  W(z) = 0#3
+    5.                wr(z)         [1,1]  W(z) = 0##3
     6.                acq(x)        [1,2]
     7.                rel(x)        [4,3]
 
-#### Earlier race not detected
+### Earlier race not detected
 
         T0            T1
 
     1.  fork(T1)                    [1,0]
     2.  acq(y)                      [2,0]
     3.  wr(x)                       [3,0]  W(x) = undefined
-    4.  wr(x)                       [4,0]  W(x) = 0#3
+    4.  wr(x)                       [4,0]  W(x) = 0##3
     5.  rel(y)                      [5,0]
-    6.                wr(x)         [1,1]  W(x) = 0#4
+    6.                wr(x)         [1,1]  W(x) = 0##4
     7.                acq(y)        [1,2]
     8.                rel(y)        [5,3]
 
-#### Read-write races
+### Read-write races
 
         T0            T1            T2
 
@@ -786,10 +786,10 @@ We include `fork` and `join` events.
     4.  rd(x)                                     [4,0,0]
     5.                rd(x)                       [2,1,0]
     6.                              acq(y)        [3,0,1]
-    7.                              wr(x)         [3,0,2]  W(x) = 0#1  R(x) = [0#4,1#1]
+    7.                              wr(x)         [3,0,2]  W(x) = 0##1  R(x) = [0##4,1##1]
     8.                              rel(y)        [3,0,3]
 
-# Summary
+## Summary
 
 ## False negatives
 

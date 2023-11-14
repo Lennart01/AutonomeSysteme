@@ -5,7 +5,7 @@ description: Martin Sulzmann
 
 
 
-# Go
+## Go
 
 Programmiersprache entwickelt von Google: [Go](http://golang.org/)
 
@@ -23,7 +23,7 @@ Programmiersprache entwickelt von Google: [Go](http://golang.org/)
     -   Philosophie: “Do not communicate by sharing memory. Instead
         share by communicating.”
 
-# Hello World
+## Hello World
 
     package main
 
@@ -46,7 +46,7 @@ Programmiersprache entwickelt von Google: [Go](http://golang.org/)
     -   Eine Variable `varName` mit dem Typ `varType`
 -   Eine Statement pro Zeile. Semikolon redundant.
 
-# Go Toolchain
+## Go Toolchain
 
 -   Ausführung via der “Kommandozeile”
 
@@ -67,7 +67,7 @@ Programmiersprache entwickelt von Google: [Go](http://golang.org/)
 
 Zur Info, unsere Programme bestimmen immer aus einer Datei.
 
-# Nebenläufigkeit (goroutine)
+## Nebenläufigkeit (goroutine)
 
 Nebenläufige Ausführung: “just say go”
 
@@ -147,7 +147,7 @@ Blockierende Anweisungen:
 
 -   Senden auf Kanal (potentiell blockierend da Kanal ‘voll’ sein kann)
 
-#### Zustandsbasierte Ausführung
+### Zustandsbasierte Ausführung
 
 Notation angelehnt an die Ausfuehrung von UPPAAL/kommunizierenden
 Automaten.
@@ -238,7 +238,7 @@ Ausfuehrung obigen Programs. Annahme: Eine CPU verfuegbar.
 
 usw
 
-# Lambdas (annonyme Funktionen) in Go.
+## Lambdas (annonyme Funktionen) in Go.
 
 Unser Beispiel von vorher.
 
@@ -321,7 +321,7 @@ Und eine weitere Variante.
         thread("C")
     }
 
-# Kommunikation (“channels”)
+## Kommunikation (“channels”)
 
 Der Nachrichtenaustausch zwischen Threads geschieht mit Hilfe von
 Kanälen (“channels”). Folgendes Prinzip gilt:
@@ -621,7 +621,7 @@ Nur Empfangen
      ...
     }
 
-# Beispiele Kanal mit und ohne Puffer
+## Beispiele Kanal mit und ohne Puffer
 
     package main
 
@@ -706,7 +706,7 @@ Nur Empfangen
 
     }
 
-# Synchrone versus Asynchrone Kommunikation
+## Synchrone versus Asynchrone Kommunikation
 
 Zur Wiederholung.
 
@@ -864,7 +864,7 @@ Es folgt noch eine Beispielanwendung einer MVar.
 
 ### MVar Kodierungs Probleme
 
-#### Problem direkter Kommunikation
+### Problem direkter Kommunikation
 
 Folgt direkt nach `newMVar` ein `putMVar` folgt, ist es möglich, dass
 die `newMVar` Sendeoperation im nebenläufigen Thread von der `putMVar`
@@ -882,7 +882,7 @@ Betrachte dazu folgendes Beispiel.
 MVar wird initial mit `1` gefühlt. Deshalb erwarten wir die Ausgabe `1`.
 Aber auch `2` ist möglich.
 
-#### Problem Kommunikation bleibt stecken
+### Problem Kommunikation bleibt stecken
 
 Weiteres Problem tritt ein falls es eine Abfolge von hintereinander
 ausgeführten `takeMVar` und `putMvar` Befehlen gibt. Betrachte
@@ -1078,7 +1078,7 @@ Beachte:
 
     }
 
-# Kanäle von Kanälen (“channels of channels”)
+## Kanäle von Kanälen (“channels of channels”)
 
 Kanäle sind Werte (“first-class citizens”)
 
@@ -1470,7 +1470,7 @@ vorhandenen Speicher begrenzt).
         reuters(server)
     }
 
-# Nichtdeterministische Auswahl (“select”)
+## Nichtdeterministische Auswahl (“select”)
 
 -   Oftmals ist es notwendig gleichzeitig auf mehrere Ereignisse zu
     warten.
@@ -2020,7 +2020,7 @@ Interessanterweise, ist eine vollstaendige Kodierung von `select` nur
 mit Threads und Kanaelen moeglich. Bei Interesse kann dieses Thema in
 einer Projektarbeit behandelt werden.
 
-# Was alles schief gehen kann
+## Was alles schief gehen kann
 
 Wir betrachten Fehlerszenarien im Kontext der nebenläufigen
 Programmierung.
@@ -2353,7 +2353,7 @@ etc). Im Fall von einem Data Race ist der Data Race nicht direkt aus der
 Programmspur ablesbar und Bedarf einer Umordnung der Programmspur.
 Nebenläufige Programmierfehler aufzudecken ist deshalb trickreich.
 
-# Aufgabe: Quantifizierter Semaphor
+## Aufgabe: Quantifizierter Semaphor
 
 Wir betrachten eine Implementierung eines Kanal mit Puffer basierend
 rein auf Pufferlosen Kanälen.
@@ -2877,7 +2877,7 @@ Beachte. Da Google Go (zum Teil) kooperatives Scheduling benutzt kann es
 durchaus sein, dass der theoretisch hohe Grad der Nebenläufigkeit nicht
 praktisch (d.h. parallel) ausgenutzt werden kann.
 
-# Aufgabe: Erweiterung Sleeping Barber
+## Aufgabe: Erweiterung Sleeping Barber
 
 Erweitern Sie das Sleeping Barber Beispiel:
 
@@ -2970,7 +2970,7 @@ Kanal ‘waitQ’ ist der Flaschhals.
 Idee, designierter Kanal pro ‘barber’. Auswahl von ‘customer’ via
 select. Priorisierung möglich.
 
-# Aufgabe: Erweiterung Sleeping Barber II
+## Aufgabe: Erweiterung Sleeping Barber II
 
 Eine weitere Variante des Sleeping Barber Problems. Vorgestellt werden
 verschiedene Lösungsverschläge. Diskutiert werden trickreiche
@@ -3172,7 +3172,7 @@ Fehlerszenarien wie Deadlocks und Livelocks.
         testBarber2b()
     }
 
-# Aufgabe: Speisende Philosophen
+## Aufgabe: Speisende Philosophen
 
 Wir betrachten das Problem der speisenden Philosophen. Die Anordnung der
 Gabeln soll dabei keine Rolle spielen. Sprich wir gehen von N
@@ -3409,7 +3409,7 @@ Betrachte folgende weitere Variante.
 
 Welche der oben beschriebenen Probleme können noch auftreten?
 
-# Aufgabe: The Santa Claus Problem
+## Aufgabe: The Santa Claus Problem
 
 ## Problem statement
 
@@ -3785,7 +3785,7 @@ improvements are yet incorporated.
 
     }
 
-# Zusammenfassung
+## Zusammenfassung
 
 -   Überblick Go Primitive zur simultanen Programmierung mittels
     Austausch von Nachrichten

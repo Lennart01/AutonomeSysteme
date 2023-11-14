@@ -5,7 +5,7 @@ description: Martin Sulzmann
 
 
 
-# Motivation and overview: Static versus dynamic verification
+## Motivation and overview: Static versus dynamic verification
 
 ## Verification by example
 
@@ -112,7 +112,7 @@ Static = compile-time
 
 This is just a selection
 
-# Resource usage verification (overview)
+## Resource usage verification (overview)
 
 Resource = File
 
@@ -233,7 +233,7 @@ infinite (as the program may not terminate).
 the membership test for regular expressions)** (in both cases, offline
 or online).
 
-#### Membership
+### Membership
 
 Recall the membership problem for regular expressions.
 
@@ -243,7 +243,7 @@ Notation we use: `L(r)` refers to the language denoted by `r`. We write
 The membership problem is the problem of deciding if `w` is a member
 (element) in the language described by the regular expression `r`.
 
-##### Prefix test
+#### Prefix test
 
 The resource usage policy is specified in terms of a regular expression
 `r`.
@@ -292,7 +292,7 @@ Approximate program in terms of regular expressions.
 
 Apply language containment for static verification.
 
-# Dynamic resource usage verification in Go (via an EDSL)
+## Dynamic resource usage verification in Go (via an EDSL)
 
 Step 1. Formalize a simple resource usage language (in Go).
 
@@ -323,7 +323,7 @@ evolve and adapt. Can reuse existing eco-system. Might to be not as
 optimized as external DSL. Other issues, domain-specific error handling
 etc.
 
-# Step 1: Simple resource usage language (RUL) as an EDSL in GO
+## Step 1: Simple resource usage language (RUL) as an EDSL in GO
 
 We embed our resource usage language (RUL) in Go. We make use of Go
 interfaces to describe the (type) behavior of resource usage primitives.
@@ -456,7 +456,7 @@ effectively employ call-by-reference).
 
     }
 
-# Step 2: Events
+## Step 2: Events
 
 During program execution, an *event* represents a particular
 point/behavior we are interested.
@@ -508,7 +508,7 @@ event.
         fmt.Printf("\n %s", showEvt(e))
     }
 
-# Step 3: Policy as regular expressions
+## Step 3: Policy as regular expressions
 
 Below we define regular expressions in Go where the alphabet equals the
 set of events `{Open, Close, Write, Read}`.
@@ -655,7 +655,7 @@ quotient](https://en.wikipedia.org/wiki/Quotient_of_a_formal_language).
         }
     }
 
-# Step 4a: Online dynamic resource usage verification via regular expressions
+## Step 4a: Online dynamic resource usage verification via regular expressions
 
 Approach:
 
@@ -759,7 +759,7 @@ Our two running examples.
 
     }
 
-# Step 4b: Offline dynamic resource usage verification via regular expressions
+## Step 4b: Offline dynamic resource usage verification via regular expressions
 
 Approach:
 
@@ -938,7 +938,7 @@ Below you can find a complete example.
 Compared to the "kill" version, this version is more robust (to be
 discussed in some upcoming exercises)
 
-# Complete source for online/offline run-time verification
+## Complete source for online/offline run-time verification
 
     package main
 
@@ -1501,7 +1501,7 @@ discussed in some upcoming exercises)
         // testOnlineTracer()
     }
 
-# Exercises (Online/Offline run-time verification)
+## Exercises (Online/Offline run-time verification)
 
 ## Online resource usage verification
 
@@ -1659,7 +1659,7 @@ counter), based on the `DONE` counter and the number of events received
 so far, the tracer thread can decide if it needs to continue or can
 stop.
 
-# Static resource usage verification
+## Static resource usage verification
 
 ## Motivation - Static type checking
 
@@ -1861,7 +1861,7 @@ program. Hence, this is an example for a false positive.
 For further details, see [Resource Usage Verification,
 APLAS'03](https://www.researchgate.net/publication/221323167_Resource_Usage_Verification)
 
-# Summary
+## Summary
 
 Things we have seen.
 
