@@ -27,6 +27,11 @@ input_output = [
     html_object("weitereBeispiele.html", PWD + "teil_2/weitereBeispiele.md", "Weitere Beispiele"),
     html_object("lec-go-compact.html", PWD + "teil_1/lec-go-compact.md", "Die Programmiersprache Go - Kurz und knapp"),
 
+    html_object("lec-data-race-examples.html", PWD + "teil_2/lec-data-race-examples.md", "Dynamic data race prediction - TSan and examples"),
+    html_object("lec-data-race-summary.html", PWD + "teil_2/lec-data-race-summary.md", "Dynamic data race prediction - Summary"),
+    html_object("lec-fun-stuff.html", PWD + "teil_2/lec-fun-stuff.md", "Fun stuff - On-going research topics"),
+
+
     html_object("uppaal.html", PWD + "uppaal/uppaal.md", "UPPAAL Labor"),
 
 

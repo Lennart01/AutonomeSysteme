@@ -1460,14 +1460,182 @@ To summarize.
         santa2()
     }
 
+## Futures - Motivation
+
+-   We consider a “simple” programming task
+
+-   In our implementation
+
+    -   Design choice hard coded.
+
+    -   User code hard to read and to maintain (manage threads,
+        channels, …).
+
+-   We need proper (programming language) abstraction to hide
+    implementation details =&gt; futures and promises
+
+    package main
+
+    import "time"
+    import "fmt"
+
+    // Running example.
+    //
+    // Inform friends about some booking request.
+    // 1. Request a quote from some Hotel (via booking).
+    // 2. Tell your friends.
+
+    // Book some Hotel. Report price (int) and some poential failure (bool).
+    func booking() (int, bool) {
+
+        time.Sleep(1 * time.Second)
+
+        return 30, true
+    }
+
+    /*
+
+    Idea:
+
+    - Channel to communicate result.
+
+    - Asynchronous (non-blocking) computation of booking by using a separate thread.
+
+    Issue?
+
+        Only one of the friends obtains the result.
+
+
+    */
+
+    type Comp struct {
+        val    int
+        status bool
+    }
+
+    func buggy_attempt() {
+
+        ch := make(chan Comp)
+        go func() {
+            r, s := booking()
+            ch <- Comp{r, s}
+        }()
+
+        // friend 1
+        go func() {
+            v := <-ch
+            fmt.Printf("\n %d %t", v.val, v.status)
+        }()
+
+        // friend 2
+        go func() {
+            v := <-ch
+            fmt.Printf("\n %d %t", v.val, v.status)
+        }()
+
+        // We assume some other stuff is happening.
+        time.Sleep(2 * time.Second)
+
+    }
+
+    /*
+
+    How to fix the issue?
+
+    Either one of the following must hold.
+
+     ServerSolution: Server guarantees that result can be obtained multiple times.
+
+     ClientSolution: Client guarantees that other clients can obtain the (same) result.
+
+
+    */
+
+    func server_solution() {
+
+        ch := make(chan Comp)
+        go func() {
+            r, s := booking()
+            for {
+                ch <- Comp{r, s} // Supply result many times.
+            }
+        }()
+
+        // friend 1
+        go func() {
+            v := <-ch
+            fmt.Printf("\n %d %t", v.val, v.status)
+        }()
+
+        // friend 2
+        go func() {
+            v := <-ch
+            fmt.Printf("\n %d %t", v.val, v.status)
+        }()
+
+        time.Sleep(2 * time.Second)
+
+    }
+
+    func client_solution() {
+
+        ch := make(chan Comp)
+        go func() {
+            r, s := booking()
+            ch <- Comp{r, s}
+        }()
+
+        // friend 1
+        go func() {
+            v := <-ch
+            go func() {
+                ch <- v // Make sure other friends obtain the result as well.
+            }()
+            fmt.Printf("\n %d %t", v.val, v.status)
+        }()
+
+        // friend 2
+        go func() {
+            v := <-ch
+            go func() {
+                ch <- v // Make sure other friends obtain the result as well.
+            }()
+            fmt.Printf("\n %d %t", v.val, v.status)
+        }()
+
+        time.Sleep(2 * time.Second)
+
+    }
+
+    /*
+
+    Summary
+
+        Something "simple" gets complicated.
+
+        Design choice hard coded.
+
+        User code hard to read and to maintain (manage threads, channels, ...).
+
+     ==>
+
+        Need proper (programming language) abstraction to hide implementation details.
+
+
+    */
+
+    func main() {
+
+        buggy_attempt()
+        server_solution()
+        client_solution()
+    }
+
 ## Futures
 
-Futures and promises are a high-level concurrency construct to support
-asynchronous programming. A future can be viewed as a placeholder for a
-computation that will eventually become available. The term promise is
-often referred to a form of future where the result can be explicitly
-provided by the programmer. For a high-level overview, see
-[here](https://en.wikipedia.org/wiki/Futures_and_promises).
+Futures are a high-level concurrency construct to support asynchronous
+programming. A future can be viewed as a placeholder for a computation
+that will eventually become available.
 
 It is folklore knowledge to represent futures in terms of channels. For
 example, in Go a future of type `T` is represented as `chan T`. We can
@@ -1477,15 +1645,15 @@ the general idea and we will work out the details next.
 
 ## Summary of main features
 
-    type Future
+    type Future[T any]
 
-    future(func() (T,bool)) Future
+    future[T any](func() (T,bool)) Future[T]
 
-    (Future) get() (T,bool)
+    (Future[T]) get() (T,bool)
 
-    (Future) onSuccess(func(T))
+    (Future[T]) onSuccess(func(T))
 
-    (Future) onFail(func())
+    (Future[T]) onFail(func())
 
 -   `Future` holds a value of some type `T` that becomes available
     eventually.
@@ -1531,18 +1699,24 @@ the general idea and we will work out the details next.
 
 ## Channel-based futures in Go
 
-    type Comp struct {
-        val    interface{}
+Our implementation makes use of “generics”. Further info on “generics”:
+See [Go Generics](https://go.dev/doc/tutorial/generics) and [Model-based
+SW leture on Go
+Generics](https://sulzmann.github.io/ModelBasedSW/lec-go-generics.html).
+
+    type Comp[T any] struct {
+        val    T
         status bool
     }
 
-    type Future chan Comp
+    type Future[T any] chan Comp[T]
 
-    func future(f func() (interface{}, bool)) Future {
-        ch := make(chan Comp)
+
+    func future[T any](f func() (T, bool)) Future[T] {
+        ch := make(chan Comp[T])
         go func() {
             r, s := f()
-            v := Comp{r, s}
+            v := Comp[T]{r, s}
             for {
                 ch <- v
             }
@@ -1551,12 +1725,12 @@ the general idea and we will work out the details next.
 
     }
 
-    func (f Future) get() (interface{}, bool) {
+    func (f Future[T]) get() (T, bool) {
         v := <-f
         return v.val, v.status
     }
 
-    func (ft Future) onSuccess(cb func(interface{})) {
+    func (ft Future[T]) onSuccess(cb func(T)) {
         go func() {
             v, o := ft.get()
             if o {
@@ -1566,7 +1740,7 @@ the general idea and we will work out the details next.
 
     }
 
-    func (ft Future) onFailure(cb func()) {
+    func (ft Future[T]) onFailure(cb func()) {
         go func() {
             _, o := ft.get()
             if !o {
@@ -1575,9 +1749,6 @@ the general idea and we will work out the details next.
         }()
 
     }
-
--   We represent the type `T` via `interface{}` (Go does not support
-    generics).
 
 -   We use a Boolean value to indicate success or failure of a
     computation. Hence, the type `Comp` to represent the result of a
@@ -1593,7 +1764,8 @@ the general idea and we will work out the details next.
 
 -   We repeatedly transmit the value (in an infinite loop) to retrieve
     the value of a `Future`an arbitrary number of times (multiple `get`,
-    `onSuccess`, `onFail` calls).
+    `onSuccess`, `onFail` calls). We refer to this as the “server-side”
+    approach.
 
 -   We can access the value via `get` by performing a receive operation
     on the channel. This operation blocks if no value is available yet.
@@ -1609,13 +1781,13 @@ the general idea and we will work out the details next.
 Here is an example application where we asynchronously execute some http
 request. While waiting for the request, we can “do something else”.
 
-    func getSite(url string) Future {
-        return future(func() (interface{}, bool) {
+    func getSite(url string) Future[*http.Response] {
+        return future(func() (*http.Response, bool) {
             resp, err := http.Get(url)
             if err == nil {
                 return resp, true
             }
-            return err, false
+            return resp, false // ignore err, we only report "false"
         })
     }
 
@@ -1632,8 +1804,7 @@ request. While waiting for the request, we can “do something else”.
 
         stern := getSite("http://www.stern.de")
 
-        stern.onSuccess(func(result interface{}) {
-            response := result.(*http.Response)
+        stern.onSuccess(func(response *http.Response) {
             printResponse(response)
 
         })
@@ -1661,11 +1832,11 @@ other (via `get`). Can we be more efficient? Yes, we can make use of
 ## `first` and `firstSucc`
 
     // Pick first available future
-    func (ft Future) first(ft2 Future) Future {
+    func (ft Future[T]) first(ft2 Future[T]) Future[T] {
 
-        return future(func() (interface{}, bool) {
+        return future(func() (T, bool) {
 
-            var v interface{}
+            var v T
             var o bool
 
             // check for any result to become available
@@ -1685,11 +1856,11 @@ other (via `get`). Can we be more efficient? Yes, we can make use of
     }
 
     // Pick first successful future
-    func (ft Future) firstSucc(ft2 Future) Future {
+    func (ft Future[T]) firstSucc(ft2 Future[T]) Future[T] {
 
-        return future(func() (interface{}, bool) {
+        return future(func() (T, bool) {
 
-            var v interface{}
+            var v T
             var o bool
 
             select {
@@ -1720,14 +1891,15 @@ other (via `get`). Can we be more efficient? Yes, we can make use of
 Our example with three http requests where we are only interested in the
 first available request.
 
+    func example2() {
+
         spiegel := getSite("http://www.spiegel.de")
         stern := getSite("http://www.stern.de")
         welt := getSite("http://www.welt.com")
 
         req := spiegel.first(stern.first(welt))
 
-        req.onSuccess(func(result interface{}) {
-            response := result.(*http.Response)
+        req.onSuccess(func(response *http.Response) {
             printResponse(response)
 
         })
@@ -1740,6 +1912,133 @@ first available request.
 
         time.Sleep(2 * time.Second)
 
+    }
+
+## Holiday booking example
+
+    func example3() {
+
+        // Book some Hotel. Report price (int) and some potential failure (bool).
+        booking := func() (int, bool) {
+            time.Sleep((time.Duration)(rand.Intn(999)) * time.Millisecond)
+            return rand.Intn(50), true
+        }
+
+        f1 := future[int](booking)
+
+        // Another booking request.
+        f2 := future[int](booking)
+
+        f3 := f1.firstSucc(f2)
+
+        f3.onSuccess(func(quote int) {
+
+            fmt.Printf("\n Hotel asks for %d Euros", quote)
+        })
+
+        time.Sleep(2 * time.Second)
+    }
+
+## Types to describe computations
+
+Here: “future” computations.
+
+    type Future[T any]
+
+Operations on futures.
+
+    func (ft Future[T]) firstSucc(ft2 Future[T]) Future[T]         // selection
+    func (ft Future[T]) when(p func(T) bool) Future[T]             // guard
+    func (ft Future[T]) then(f func(T) (T, bool)) Future[T]        // sequence
+
+Leads to “readable” program code.
+
+## Flight booking
+
+    func example4() {
+
+        rnd := func() int {
+            return rand.Intn(300) + 500
+        }
+
+        flightLH := func() (int, bool) {
+            time.Sleep((time.Duration)(rand.Intn(999)) * time.Millisecond)
+            return rnd(), true
+        }
+
+        flightTH := func() (int, bool) {
+            time.Sleep((time.Duration)(rand.Intn(999)) * time.Millisecond)
+            return rnd(), true
+        }
+
+        f1 := future[int](flightLH) // Flight Lufthansa
+        f2 := future[int](flightTH) // Flight Thai Airways
+
+        // 1. Check with Lufthansa and Thai Airways.
+        // 2. Set some ticket limit
+        f3 := f1.firstSucc(f2).when(func(x int) bool { return x < 800 })
+
+        f3.onSuccess(func(overall int) {
+
+            fmt.Printf("\n Flight %d Euros", overall)
+        })
+
+        f3.onFailure(func() {
+
+            fmt.Printf("\n Booking failed")
+        })
+
+        time.Sleep(2 * time.Second)
+
+    }
+
+## Flight + stop-over Hotel booking
+
+    func example5() {
+
+        rnd := func() int {
+            return rand.Intn(300) + 500
+        }
+
+        flightLH := func() (int, bool) {
+            time.Sleep((time.Duration)(rand.Intn(999)) * time.Millisecond)
+            return rnd(), true
+        }
+
+        flightTH := func() (int, bool) {
+            time.Sleep((time.Duration)(rand.Intn(999)) * time.Millisecond)
+            return rnd(), true
+        }
+
+        stopOverHotel := func() int {
+            return 50
+        }
+
+        f1 := future[int](flightLH) // Flight Lufthansa
+        f2 := future[int](flightTH) // Flight Thai Airways
+
+        // 1. Check with Lufthansa and Thai Airways.
+        // 2. Set some ticket limit
+        // 3. If okay proceed booking some stop-over Hotel.
+        f3 := f1.firstSucc(f2).when(func(x int) bool { return x < 800 }).then(func(flight int) (int, bool) {
+            hotel := stopOverHotel()
+            return flight + hotel, true
+        })
+
+        f3.onSuccess(func(overall int) {
+
+            fmt.Printf("\n Flight+Stop-over Hotel %d Euros", overall)
+        })
+
+        f3.onFailure(func() {
+
+            fmt.Printf("\n booking failed")
+        })
+
+        time.Sleep(2 * time.Second)
+
+    }
+
 ## Futures - complete source code
 
     package main
@@ -1747,25 +2046,27 @@ first available request.
     import "fmt"
     import "time"
     import "net/http"
+    import "math/rand"
 
     ////////////////////
-    // Simple futures
+    // Simple futures with generics
 
     // A future, once available, will be transmitted via a channel.
     // The Boolean parameter indicates if the (future) computation succeeded or failed.
 
-    type Comp struct {
-        val    interface{}
+    type Comp[T any] struct {
+        val    T
         status bool
     }
 
-    type Future chan Comp
+    type Future[T any] chan Comp[T]
 
-    func future(f func() (interface{}, bool)) Future {
-        ch := make(chan Comp)
+    // "Server-side" approach
+    func future[T any](f func() (T, bool)) Future[T] {
+        ch := make(chan Comp[T])
         go func() {
             r, s := f()
-            v := Comp{r, s}
+            v := Comp[T]{r, s}
             for {
                 ch <- v
             }
@@ -1774,12 +2075,12 @@ first available request.
 
     }
 
-    func (f Future) get() (interface{}, bool) {
+    func (f Future[T]) get() (T, bool) {
         v := <-f
         return v.val, v.status
     }
 
-    func (ft Future) onSuccess(cb func(interface{})) {
+    func (ft Future[T]) onSuccess(cb func(T)) {
         go func() {
             v, o := ft.get()
             if o {
@@ -1789,7 +2090,7 @@ first available request.
 
     }
 
-    func (ft Future) onFailure(cb func()) {
+    func (ft Future[T]) onFailure(cb func()) {
         go func() {
             _, o := ft.get()
             if !o {
@@ -1803,11 +2104,11 @@ first available request.
     // Adding more functionality
 
     // Pick first available future
-    func (ft Future) first(ft2 Future) Future {
+    func (ft Future[T]) first(ft2 Future[T]) Future[T] {
 
-        return future(func() (interface{}, bool) {
+        return future(func() (T, bool) {
 
-            var v interface{}
+            var v T
             var o bool
 
             // check for any result to become available
@@ -1827,11 +2128,11 @@ first available request.
     }
 
     // Pick first successful future
-    func (ft Future) firstSucc(ft2 Future) Future {
+    func (ft Future[T]) firstSucc(ft2 Future[T]) Future[T] {
 
-        return future(func() (interface{}, bool) {
+        return future(func() (T, bool) {
 
-            var v interface{}
+            var v T
             var o bool
 
             select {
@@ -1857,16 +2158,43 @@ first available request.
         })
     }
 
+    func (ft Future[T]) when(p func(T) bool) Future[T] {
+
+        return future(func() (T, bool) {
+            v, o := ft.get()
+
+            if o && p(v) {
+                return v, o
+            } else {
+                return v, false
+            }
+        })
+
+    }
+
+    func (ft Future[T]) then(f func(T) (T, bool)) Future[T] {
+
+        return future(func() (T, bool) {
+            v, o := ft.get()
+            if o {
+                return f(v)
+            } else {
+                return v, o
+            }
+        })
+
+    }
+
     ///////////////////////
     // Examples
 
-    func getSite(url string) Future {
-        return future(func() (interface{}, bool) {
+    func getSite(url string) Future[*http.Response] {
+        return future(func() (*http.Response, bool) {
             resp, err := http.Get(url)
             if err == nil {
                 return resp, true
             }
-            return err, false
+            return resp, false // ignore err, we only report "false"
         })
     }
 
@@ -1883,8 +2211,7 @@ first available request.
 
         stern := getSite("http://www.stern.de")
 
-        stern.onSuccess(func(result interface{}) {
-            response := result.(*http.Response)
+        stern.onSuccess(func(response *http.Response) {
             printResponse(response)
 
         })
@@ -1907,8 +2234,7 @@ first available request.
 
         req := spiegel.first(stern.first(welt))
 
-        req.onSuccess(func(result interface{}) {
-            response := result.(*http.Response)
+        req.onSuccess(func(response *http.Response) {
             printResponse(response)
 
         })
@@ -1923,14 +2249,189 @@ first available request.
 
     }
 
+    // Holiday booking
+    func example3() {
+
+        // Book some Hotel. Report price (int) and some potential failure (bool).
+        booking := func() (int, bool) {
+            time.Sleep((time.Duration)(rand.Intn(999)) * time.Millisecond)
+            return rand.Intn(50), true
+        }
+
+        f1 := future[int](booking)
+
+        // Another booking request.
+        f2 := future[int](booking)
+
+        f3 := f1.firstSucc(f2)
+
+        f3.onSuccess(func(quote int) {
+
+            fmt.Printf("\n Hotel asks for %d Euros", quote)
+        })
+
+        time.Sleep(2 * time.Second)
+    }
+
+    // Flight booking
+    func example4() {
+
+        rnd := func() int {
+            return rand.Intn(300) + 500
+        }
+
+        flightLH := func() (int, bool) {
+            time.Sleep((time.Duration)(rand.Intn(999)) * time.Millisecond)
+            return rnd(), true
+        }
+
+        flightTH := func() (int, bool) {
+            time.Sleep((time.Duration)(rand.Intn(999)) * time.Millisecond)
+            return rnd(), true
+        }
+
+        f1 := future[int](flightLH) // Flight Lufthansa
+        f2 := future[int](flightTH) // Flight Thai Airways
+
+        // 1. Check with Lufthansa and Thai Airways.
+        // 2. Set some ticket limit
+        f3 := f1.firstSucc(f2).when(func(x int) bool { return x < 800 })
+
+        f3.onSuccess(func(overall int) {
+
+            fmt.Printf("\n Flight %d Euros", overall)
+        })
+
+        f3.onFailure(func() {
+
+            fmt.Printf("\n Booking failed")
+        })
+
+        time.Sleep(2 * time.Second)
+
+    }
+
+    // Composition of several "future" operations: Flight+Hotel booking
+    func example5() {
+
+        rnd := func() int {
+            return rand.Intn(300) + 500
+        }
+
+        flightLH := func() (int, bool) {
+            time.Sleep((time.Duration)(rand.Intn(999)) * time.Millisecond)
+            return rnd(), true
+        }
+
+        flightTH := func() (int, bool) {
+            time.Sleep((time.Duration)(rand.Intn(999)) * time.Millisecond)
+            return rnd(), true
+        }
+
+        stopOverHotel := func() int {
+            return 50
+        }
+
+        f1 := future[int](flightLH) // Flight Lufthansa
+        f2 := future[int](flightTH) // Flight Thai Airways
+
+        // 1. Check with Lufthansa and Thai Airways.
+        // 2. Set some ticket limit
+        // 3. If okay proceed booking some stop-over Hotel.
+        f3 := f1.firstSucc(f2).when(func(x int) bool { return x < 800 }).then(func(flight int) (int, bool) {
+            hotel := stopOverHotel()
+            return flight + hotel, true
+        })
+
+        f3.onSuccess(func(overall int) {
+
+            fmt.Printf("\n Flight+Stop-over Hotel %d Euros", overall)
+        })
+
+        f3.onFailure(func() {
+
+            fmt.Printf("\n booking failed")
+        })
+
+        time.Sleep(2 * time.Second)
+
+    }
+
     func main() {
 
         // example1()
 
-        example2()
+        // example2()
+
+        // example3()
+
+        // example4()
+
+        // example5()
     }
 
+## Futures versus Promises
+
+The terms futures and promises are often used interchangeably. Strictly
+speaking, there is a technical difference between futures and promises.
+
+**Futures:** A future can be viewed as a placeholder for a computation
+that will eventually become available.
+
+**Promises:** The term promise is often referred to a form of future
+where the result can be explicitly provided by the programmer.
+
+For a high-level overview, see
+[here](https://en.wikipedia.org/wiki/Futures_and_promises).
+
+*What? Sounds all the same to me*
+
+Ineed, it gets rather technical to explain the differences between
+futures and promises. For details, see [Futures and Promises in Haskell
+and Go](https://sulzmann.github.io/ModelBasedSW/futures-promises.html).
+
 ## Summary
+
+## Evolution of programming languages
+
+Some are general purpose (and can be applied to many different tasks).
+
+Some are domain specific (having a specific task in mind).
+
+No programming language is perfect. We can evolve a language
+
+-   by enriching the language itself (new syntax, compiler, …)
+
+-   by providing a clever “framwork” (aka library)
+
+## Embedded Domain Specific Languages (EDSL aka frameworks)
+
+Embed a domain specific language into a general purpose language.
+
+For example, embed the fork/join construct into Go.
+
+This is done by means of a “clever” library.
+
+The following language features are highly useful to support “elegant”
+EDSLs
+
+-   Define your own types
+
+    type Mutex chan int
+
+-   Support higher-order functions
+
+    func fork(f func()) J { ... }
+
+-   Abstract over type parameters
+
+    type Future[T any]
+
+-   Composition of (monadic) computations
+
+    f1.firstSucc(f2).when(func(x int) bool { return x < 800 })
+
+## Concurrency in Go
 
 In Go, we can support the following three concurrency models by
 emulating them via channels. Such emulations are useful to (a)

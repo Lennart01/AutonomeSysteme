@@ -49,9 +49,8 @@ We introduce a well-established deadlock prediction method based on
 
 -   If there is a cycle, we report that there is a potential deadlock.
 
-In the below, we consider some examples and consider a simple
-implementation of the lock graph method in Go for the analysis of
-programs making use of acquire/release operations.
+We will also consider an improved representation based on *lock
+dependencies*.
 
 ## Literature
 
@@ -68,9 +67,14 @@ Goodlock can only deal with two threads.
 Introduces lock graphs, a generalization of lock trees. Lock graphs are
 capable of checking for deadlocks among three threads and more.
 
-## Examples
+-   [A Randomized Dynamic Program Analysis Technique for Detecting Real
+    Deadlocks](https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=3fd292d8775cb2422f4154a6e35e38e3872f586a)
 
-We explain the idea of dynamic deadlock predication based on lock graphs
+Introduces lock dependencies.
+
+## Lock graph based dynamic deadlock prediction
+
+We explain the idea of dynamic deadlock prediction based on lock graphs
 via several examples. The lock graph construction is as follows.
 
 -   Locks are nodes.
@@ -124,13 +128,199 @@ As we can see, all threads are blocked =&gt; deadlock!
 
 If there’s a cycle in the lock graph, there’s a potential deadlock.
 
-## Precision
+## Precision (false positives)
 
 How *precise* is the analysis method based on lockgraphs?
 
-## False positives
+### Same thread
 
-Consider the example.
+Consider the following example where also record the lockset for each
+thread.
+
+        T1         T2     LS_T1     LS_T2
+
+     1.  acq(y)            {y}
+     2.  acq(x)            {y,x}                 yields y -> x
+     3.  rel(x)            {y}
+     4.  rel(y)            {}
+     5.  acq(x)            {x}
+     6.  acq(y)            {x,y}                 yields x -> y
+     7.  rel(y)            {x}
+     8.  rel(x)            {}
+
+We encounter the same (cyclic) lock graph as we have seen for some
+earlier example.
+
+      y -> x
+      x -> y
+
+This is a false positives as all events take place in the *same thread*.
+
+### Guard locks
+
+Here is another example.
+
+        T1            T2           T1_LS          T2_LS
+
+     1.  acq(z)                      z
+     2.  acq(y)                      z,y                        implies z -> y
+     3.  acq(x)                      z,y,x                      implies y -> x  z -> x
+     4.  rel(x)                      z,y
+     5.  rel(y)                      z
+     6.  rel(z)
+     7.             acq(z)                        z
+     8.             acq(x)                        z,x           implies z -> x
+     9.             acq(y)                        z,x,y         implies x -> y  z -> y
+     10.            rel(y)                        z,x
+     11.            rel(x)                        z
+     12.            rel(z)
+
+In summary, we obtain the following lock graph.
+
+    z -> y
+    y -> x
+    z -> x
+    z -> x
+    x -> y
+    z -> y
+
+from which we can derive the following cycle
+
+    y -> x
+    x -> y
+
+This is again a false positive because of the common *guard lock* z.
+
+## Lock dependencies
+
+Instead of a lock graph we compute lock dependencies on a per thread
+basis. Lock dependencies D = (id, l, ls) are constructed if thread id
+acquires lock l while holding locks ls. Thus, we can eliminate same of
+the false positives that arise using lock graphs (but not all).
+
+## Computation
+
+We compute lock dependencies by processing each event in the trace (in
+the order events are recorded).
+
+We maintain the following state variables.
+
+    ls(t)
+
+      The set of locks hold by thread t at a certain time.
+
+    Ds
+
+      The set of lock dependencies.
+
+For each event we call its processing function.
+
+    acq(t,y) {
+      Ds = Ds cup { (t,y,ls(t)) }  if ls(t) != emptyset
+      ls(t) = ls(t) cup {y}
+
+    }
+
+    rel(t,y) {
+      ls(t) = ls(t) - {y}
+    }
+
+    fork(t1,t2) {
+    }
+
+    join(t1,t2) {
+    }
+
+    write(t,x) {
+    }
+
+    read(t,x) {
+    }
+
+In the above, we write `cup` to denote set union ∪. For sets S1 and S2
+we write S1 - S2 to denote the set that contains all elements in S1 that
+are not in S2.
+
+## Cycle check
+
+We write *D* = (*i**d*,*l*,*l**s*) to refer to some lock dependency in
+thread *i**d* where lock *l* is acquired while holding locks *l**s*.
+
+A deadlock (warning) is issued if there is a cyclic lock dependency
+chain *D*<sub>1</sub>, ..., *D*<sub>*n*</sub>:
+
+-   (LD-1) *l**s*<sub>*i*</sub> ∩ *l**s*<sub>*j*</sub> = ⌀ for
+    *i*! = *j*, and
+
+-   (LD-2) *l*<sub>*i*</sub> ∈ *l**s*<sub>*i*</sub> + 1 for
+    *i* = 1, ..., *n* − 1, and
+
+-   (LD-3) *l*<sub>*n*</sub> ∈ *l**s*<sub>1</sub>.
+
+Note. Each *D*<sub>*i*</sub> results from some distinct thread *i*.
+
+## Examples
+
+### Same thread
+
+Recall
+
+        T1         T2     LS_T1     LS_T2
+
+     1.  acq(y)            {y}
+     2.  acq(x)            {y,x}                 yields (T1,x,{y})
+     3.  rel(x)            {y}
+     4.  rel(y)            {}
+     5.  acq(x)            {x}
+     6.  acq(y)            {x,y}                 yields (T1,y,{x})
+     7.  rel(y)            {x}
+     8.  rel(x)            {}
+
+In summary, we find the following lock dependencies.
+
+    (T1,x,{y})
+    (T1,y,{x})
+
+No deadlock warning is issued because dependencies are from the same
+thread T1.
+
+### Guard lock
+
+Recall
+
+        T1            T2           T1_LS          T2_LS
+
+     1.  acq(z)                      z
+     2.  acq(y)                      z,y                        (T1,y,{z})
+     3.  acq(x)                      z,y,x                      (T1,x,{y,z})
+     4.  rel(x)                      z,y
+     5.  rel(y)                      z
+     6.  rel(z)
+     7.             acq(z)                        z
+     8.             acq(x)                        z,x           (T2,x,{z})
+     9.             acq(y)                        z,x,y         (T2,y,{x,z})
+     10.            rel(y)                        z,x
+     11.            rel(x)                        z
+     12.            rel(z)
+
+For the above, we compute the following lock dependencies.
+
+    D1 = (T1, y, {z})
+    D2 = (T1, x, {y,z})
+
+    D3 = (T2, x, {z})
+    D4 = (T2, y, {x,z})
+
+No deadlock warning is issued due to the common guard lock z.
+
+## Precision (false positives and false negatives)
+
+Lock dependencies improve over lock graphs but still suffer from false
+positives and false negatives.
+
+## False positive
+
+Consider the following example.
 
         T1         T2
 
@@ -138,22 +328,32 @@ Consider the example.
     2.  acq(x)
     3.  rel(x)
     4.  rel(y)
-    5.  acq(x)
-    6.  acq(y)
-    7.  rel(y)
-    8.  rel(x)
+    5.  acq(z)
+    6.  wr(a)
+    7.  rel(z)
+    8.             acq(z)
+    9.             rd(a)
+    10.            rel(z)
+    11.            acq(x)
+    12.            acq(y)
+    13.            rel(y)
+    14.            rel(x)
 
-We encounter the same (cyclic) lock graph as shown above.
+We encounter the following lock dependencies.
 
-      y -> x
-      x -> y
+    D1 = (T1, x, {y})
 
-This is a false positives as all events take place in the same thread.
+    D2 = (T2, y, {z})
+
+We issue a deadlock warning because D1, D2 form a cyclic lock dependency
+chain.
+
+This is false positive! Due to the write-read dependency, events in
+thread T1 must happen before the events in thread T2.
 
 ## False negatives
 
-We consider the addition of fork/join events. Fork corresponds to `go`.
-We can emulate a join via channel synchronization.
+Consider the following example.
 
          T1         T2        T3
 
@@ -168,9 +368,9 @@ We can emulate a join via channel synchronization.
     9.                       rel(x)
     10.                      rel(y)
 
-We find the following lock graph.
+We compute the following dependency.
 
-     y -> x
+    D1 = (T3,x,{y})
 
 There appears to be no deadlock (no cycle) but there’s a trace
 reordering under which we run into a deadlock.
@@ -185,7 +385,9 @@ reordering under which we run into a deadlock.
     5.  B-join(T2)
 
 The above is an example of a *cross-thread* critical section that
-includes several events.
+includes several events due to the fork/join dependency. However, the
+computation of lock dependencies is agnostic to cross-thread critical
+sections. This may lead to false negatives as shown above.
 
 ## Go-style mutexes behave like semaphores
 
@@ -288,11 +490,9 @@ TSan reports a deadlock but this is a clear false positive.
 
 -   Dynamic deadlock prediction based on lock graphs.
 
--   Various extensions exist to deal with false positives and false
-    negatives.
+-   Improved representation based on lock dependencies.
 
--   False positives and false negatives remain an issue (see
-    cross-thread critical sections).
+-   False positives and false negatives remain an issue.
 
 -   Go-style mutexes pose further challenges (false positives).
 

@@ -234,9 +234,9 @@ The **Lock Semantics Condition** states:
 
 -   Let P be some trace and P’ be some reordering of P.
 
--   Between any two acquire events acq(y)\_i and acq(y)\_j where i&lt;j
-    and i and j refer to the trace position, we must find some rel(y)\_k
-    where i&lt;k&lt;j
+-   In P’, between any two acquire events acq(y)\_i and acq(y)\_j where
+    i&lt;j and i and j refer to the trace position, we must find some
+    rel(y)\_k where i&lt;k&lt;j
 
 In the above trace D, the Lock Semantics Condition is violated. We find
 two acquire events acq(y) without any rel(y) event in between.
