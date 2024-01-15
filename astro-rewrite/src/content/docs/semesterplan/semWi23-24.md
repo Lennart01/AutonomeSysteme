@@ -29,7 +29,9 @@ description: Martin Sulzmann
 -   Dynamic data race prediction
     -   [Overview](./../../teil_2/lec-data-race-overview)
     -   [Happens-before Methode](./../../teil_2/lec-hb-vc)
+    -   [TSan and examples](./../../teil_2/lec-data-race-examples)
     -   [Lockset Methode](./../../teil_2/lec-lockset)
+    -   [Summary](./../../teil_2/lec-data-race-summary)
 -   [Deadlock Analyse](./../../teil_2/lec-deadlock)
 -   [Concurrency models](./../../teil_1/lec-concurrency-models)
     -   mutex
@@ -84,18 +86,26 @@ Wöchentlicher Ablauf.
             predictor”)
 -   W8, 13.11-19.11
     -   Dynamische Data Race Erkennung
+    -   Events sets vs Vector clocks
 -   W9, 20.11-26.11
     -   Dynamische Data Race Erkennung
+    -   lockset, go-race
 -   W10, 27.11-03.12
     -   Deadlock Analyse
 -   W11, 04.12-10.12
-    -   Concurrency models
+    -   Keine Vorlesung und kein Tutorium
 -   W12, 11.12-17.12
-    -   Concurrency models
+    -   General purpose versus domain specific languages
+    -   Concurrency models (mutex, fork/join, barrier, wait/notify,
+        futures)
 -   W13, 28.12-24.12
-    -   Concurrency models
+    -   Concurrency models (more on futures)
 -   Winter break
 -   W14, 08.01-14.01
-    -   TBA
+    -   [Some fun stuff](./../../teil_2/lec-fun-stuff)
 -   W15, 15.01-21.01
-    -   Klausurvorbereitung
+    -   Klausurinfo:
+        -   Schriftlich, ohne Hilfsmittel
+        -   Teil der Modulklausur Autonome Systeme + Rechner Architektur
+            (120min insgesamt)
+        -   Themen siehe oben

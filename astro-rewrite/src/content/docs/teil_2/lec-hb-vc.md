@@ -279,6 +279,8 @@ We write `ei` to denote the event at trace position `i`.
     5.               w(x)         ES_e5 = {e1,e2,e3,e4,e5}
     6.               rel(y)       ES_e6 = {e1,e2,e3,e4,e5,e6}
 
+In the above, we write `cup` to denote set union ∪.
+
 Observations:
 
 To enforce the critical section order we simply need to add the event
@@ -297,6 +299,9 @@ in the trace. To decide if *e* and *f* are in a race, we check for
 *e* &lt; *f*). Otherwise, there’s a race.
 
 ## Set-based race predictor
+
+We compute event sets by processing each event in the trace (in the
+order events are recorded).
 
 We maintain the following state variables.
 
@@ -322,8 +327,8 @@ We maintain the following state variables.
 All of the above are sets of events and assumed to be initially empty.
 The exception is W(x). We assume that initially W(x) is undefined.
 
-We write `e@operation` to denote that event `e` will be processed by
-`operation`.
+For each event we call its processing function. We write `e@operation`
+to denote that event `e` will be processed by `operation`.
 
     e@acq(t,y) {
        D(t) = D(t) cup Rel(y) cup { e }
@@ -676,7 +681,7 @@ Initially, the timestamps in R(x), W(x) and Rel(y) are all set to zero.
 In Th(i), all time stamps are set to zero but the time stamp of the
 entry i which is set to one.
 
-Event processing.
+Event processing is as follows.
 
     acq(t,y) {
       Th(t) = sync(Th(t), Rel(y))

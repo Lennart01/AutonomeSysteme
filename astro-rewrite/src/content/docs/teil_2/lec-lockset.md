@@ -21,24 +21,66 @@ same lock cannot be in a data race.
 Hence, if the lockset of two conflicting events *e* and *f* is disjoint
 then we say that (*e*,*f*) is a *Lockset data race pair*.
 
-## Lockset computation
+## Critical section
 
 We assume that critical sections are always identified by pairs of
-*a**c**q*(*y*) and *r**e**l*(*y*) events where events *a**c**q*(*y*) and
-*r**e**l*(*y*) belong to the same thread. That means the (matching)
-release for an acquire event cannot be issued by another thread.
+*a**c**q*(*y*) and *r**e**l*(*y*) events.
 
-We say an event *e* appears within a critical section belonging to lock
-*y* if we find events *a**c**q*(*y*) and *r**e**l*(*y*) such that (1)
-*e*, *a**c**q*(*y*) and *r**e**l*(*y*) all belong to the same thread,
-(2) *e* appears after *a**c**q*(*y*) and in between *a**c**q*(*y*) and
-*e* there is no other *r**e**l*(*y*) event, and (3) *e* appears before
-*r**e**l*(*y*) and in between *e* and *r**e**l*(*y*) there is no other
-*a**c**q*(*y*) event.
+To define matching acquire/release pairs, we attach thread ids and trace
+positions to events. We write *i*\##*e*<sub>*k*</sub> to denote some
+event *e* in thread *i* at trace position *k*. Recall [Trace and event
+notation](./lec-hb-vc.html##(3)).
 
-**Lockset**. Let *e* be a read or write event. Then, the locket of *e*,
-written *L**S*(*e*), consists of all *y*s where *e* appears within a
-critical section belonging to lock *y*.
+Consider acquire event *i*\##*a**c**q*(*y*)<sub>*k*</sub> and release
+event *j*\##*r**e**l*(*y*)<sub>*l*</sub>.
+
+We say that
+(*i*\##*a**c**q*(*y*)<sub>*k*</sub>,*j*\##*r**e**l*(*y*)<sub>*l*</sub>) is
+a *matching acquire/release pair* if
+
+1.  *i* = *j*, and
+
+2.  *k* &lt; *l* and there is no *i*\##*r**e**l*(*y*)<sub>*m*</sub> where
+    *k* &lt; *m* &lt; *l*.
+
+The first condition states that *a**c**q*(*y*) and *r**e**l*(*y*) belong
+to the same thread. The second condition states that inbetween
+*a**c**q*(*y*) and *r**e**l*(*y*) there is no other *r**e**l*(*y*).
+
+We write
+*C**S*(*i*\##*a**c**q*(*y*)<sub>*k*</sub>,*i*\##*r**e**l*(*y*)<sub>*l*</sub>)
+to denote the set of events that are part of the *critical section* for
+a matching acquire/release pair
+(*i*\##*a**c**q*(*y*)<sub>*k*</sub>,*i*\##*r**e**l*(*y*)<sub>*l*</sub>).
+
+An event *j*\##*e*<sub>*m*</sub> is part of
+*C**S*(*i*\##*a**c**q*(*y*)<sub>*k*</sub>,*i*\##*r**e**l*(*y*)<sub>*l*</sub>),
+written
+*j*\##*e*<sub>*m*</sub> ∈ *C**S*(*i*\##*a**c**q*(*y*)<sub>*k*</sub>,*i*\##*r**e**l*(*y*)<sub>*l*</sub>)
+if
+
+1.  *j*\##*e*<sub>*m*</sub> = *i*\##*a**c**q*(*y*)<sub>*k*</sub>, or
+    *e*=,*j*\##*r**e**l*(*y*)<sub>*l*</sub>, or
+
+2.  *j* = *i* and *k* &lt; *m* &lt; *l*.
+
+The first condition states that *a**c**q*(*y*) and *r**e**l*(*y*) are
+part of the critical section. The second condition states that any event
+inbetween that is in the same thread is also part of this critical
+section.
+
+## Lockset
+
+Let *e* an event. Then, the lockset of *e*, written *L**S*(*e*),
+consists of all *y*s where *e* appears within a critical section
+belonging to lock *y*. More formally, we define
+*L**S*(*e*) = {*y* ∣ ∃*a*, *r*.*e* ∈ *C**S*(*a*,*r*)}.
+
+∃*a*, *r*. means that we find *a* = *i*\##*a**c**q*(*y*)<sub>*k*</sub>
+and *r* = *i*\##*r**e**l*(*y*)<sub>*l*</sub> where (*a*,*r*) is matching
+pair acquire/release pair.
+
+## Example
 
 Recall the earlier trace.
 
@@ -53,10 +95,13 @@ Recall the earlier trace.
     5.               w(x)
     6.               rel(y)
 
-We find two critical sections for lock variable *y*. In thread T1, we
-have the critical section identified by *a**c**q*(*y*)<sub>2</sub> and
-*r**e**l*(*y*)<sub>3</sub> In thread T2, we have the critical section
-identified by *a**c**q*(*y*)<sub>4</sub> and *r**e**l*(*y*)<sub>6</sub>.
+We find two critical sections for lock variable *y*.
+
+In thread T1, we have the critical section
+*C**S*(*T*1\##*a**c**q*(*y*)<sub>2</sub>,*T*1\##*r**e**l*(*y*)<sub>3</sub>).
+
+In thread T2, we have the critical section
+*C**S*(*T*2\##*a**c**q*(*y*)<sub>4</sub>,*T*2\##*r**e**l*(*y*)<sub>6</sub>).
 
 We consider the locksets of events *w*(*x*)<sub>1</sub> and
 *w*(*x*)<sub>5</sub>.
@@ -135,7 +180,83 @@ In our own recent work, we combine the HB and lockset method to achieve
 [Efficient, Near Complete and Often Sound Hybrid Dynamic Data Race
 Prediction (extended version)](https://arxiv.org/abs/2004.06969).
 
-## Lockset based data race predictor algorithm
+## Lockset computation
+
+We maintain the following state variables.
+
+    ls(t)
+
+      The set of locks hold by thread t at a certain time.
+
+    LS
+
+      A mapping that records for each event e its lockset.
+
+We write `e@operation` to denote that event `e` will be processed by
+`operation`.
+
+    e@acq(t,y) {
+       ls(t) = ls(t) cup {y}
+    }
+
+    e@rel(t,y) {
+     ls(t) = ls(t) - {y}
+
+    e@fork(t1,t2) {
+    }
+
+    e@join(t1,t2) {
+    }
+
+    e@write(t,x) {
+      LS(e) = ls(t)
+    }
+
+    e@read(t,x) {
+      LS(e) = ls(t)
+    }
+
+In the above, we write `cup` to denote set union ∪. For sets S1 and S2
+we write S1 - S2 to denote the set that contains all elements in S1 that
+are not in S2.
+
+We only record the lockset for write and read events.
+
+We also cover fork and join events. As we can see, the computation of
+locksets is agnostic to the presence of fork and join events.
+
+## Observation
+
+Unlike the Lamport’s happens-before that is sensitive to the order of
+critical sections, the computation of locksets is not affected if we
+reorder critical sections.
+
+Consider trace A.
+
+         T1          T2
+
+    e1.   w(x)
+    e2.   acq(y)
+    e3.   rel(y)
+    e4.               acq(y)
+    e5.               w(x)
+    e6.               rel(y)
+
+We find that *L**S*(*e*1) = {} and *L**S*(*e*5) = {*y*}.
+
+For the following (valid) reordering
+
+         T1          T2
+    e4.               acq(y)
+    e5.               w(x)
+    e6.               rel(y)
+    e1.   w(x)
+    e2.   acq(y)
+    e3.   rel(y)
+
+we again find that *L**S*(*e*1) = {} and *L**S*(*e*5) = {*y*}.
+
+## Further examples
 
 We annotate the trace with lockset information.
 
