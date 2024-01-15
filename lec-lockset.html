@@ -113,54 +113,80 @@ and
 is disjoint then we say that
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>e</mi><mo>,</mo><mi>f</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(e,f)</annotation></semantics></math>
 is a <em>Lockset data race pair</em>.</p>
-<h2 id="lockset-computation">Lockset computation</h2>
+<h2 id="critical-section">Critical section</h2>
 <p>We assume that critical sections are always identified by pairs of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>c</mi><mi>q</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">acq(y)</annotation></semantics></math>
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mi>e</mi><mi>l</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">rel(y)</annotation></semantics></math>
-events where events
+events.</p>
+<p>To define matching acquire/release pairs, we attach thread ids and
+trace positions to events. We write
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mi>#</mi><msub><mi>e</mi><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">i\#e_k</annotation></semantics></math>
+to denote some event
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>e</mi><annotation encoding="application/x-tex">e</annotation></semantics></math>
+in thread
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>
+at trace position
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>.
+Recall <a href="./lec-hb-vc.html#(3)">Trace and event notation</a>.</p>
+<p>Consider acquire event
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mi>#</mi><mi>a</mi><mi>c</mi><mi>q</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">i\#acq(y)_k</annotation></semantics></math>
+and release event
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mi>#</mi><mi>r</mi><mi>e</mi><mi>l</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>l</mi></msub></mrow><annotation encoding="application/x-tex">j\#rel(y)_l</annotation></semantics></math>.</p>
+<p>We say that
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mi>#</mi><mi>a</mi><mi>c</mi><mi>q</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>k</mi></msub><mo>,</mo><mi>j</mi><mi>#</mi><mi>r</mi><mi>e</mi><mi>l</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>l</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(i\#acq(y)_k,j\#rel(y)_l)</annotation></semantics></math>
+is a <em>matching acquire/release pair</em> if</p>
+<ol style="list-style-type: decimal">
+<li><p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mo>=</mo><mi>j</mi></mrow><annotation encoding="application/x-tex">i=j</annotation></semantics></math>,
+and</p></li>
+<li><p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>&lt;</mo><mi>l</mi></mrow><annotation encoding="application/x-tex">k&lt;l</annotation></semantics></math>
+and there is no
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi><mi>#</mi><mi>r</mi><mi>e</mi><mi>l</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>m</mi></msub></mrow><annotation encoding="application/x-tex">i\#rel(y)_m</annotation></semantics></math>
+where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>&lt;</mo><mi>m</mi><mo>&lt;</mo><mi>l</mi></mrow><annotation encoding="application/x-tex">k&lt;m&lt;l</annotation></semantics></math>.</p></li>
+</ol>
+<p>The first condition states that
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>c</mi><mi>q</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">acq(y)</annotation></semantics></math>
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mi>e</mi><mi>l</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">rel(y)</annotation></semantics></math>
-belong to the same thread. That means the (matching) release for an
-acquire event cannot be issued by another thread.</p>
-<p>We say an event
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>e</mi><annotation encoding="application/x-tex">e</annotation></semantics></math>
-appears within a critical section belonging to lock
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math>
-if we find events
+belong to the same thread. The second condition states that inbetween
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>c</mi><mi>q</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">acq(y)</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mi>e</mi><mi>l</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">rel(y)</annotation></semantics></math>
-such that (1)
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>e</mi><annotation encoding="application/x-tex">e</annotation></semantics></math>,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>c</mi><mi>q</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">acq(y)</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mi>e</mi><mi>l</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">rel(y)</annotation></semantics></math>
-all belong to the same thread, (2)
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>e</mi><annotation encoding="application/x-tex">e</annotation></semantics></math>
-appears after
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>c</mi><mi>q</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">acq(y)</annotation></semantics></math>
-and in between
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>c</mi><mi>q</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">acq(y)</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>e</mi><annotation encoding="application/x-tex">e</annotation></semantics></math>
-there is no other
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mi>e</mi><mi>l</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">rel(y)</annotation></semantics></math>
-event, and (3)
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>e</mi><annotation encoding="application/x-tex">e</annotation></semantics></math>
-appears before
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mi>e</mi><mi>l</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">rel(y)</annotation></semantics></math>
-and in between
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>e</mi><annotation encoding="application/x-tex">e</annotation></semantics></math>
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mi>e</mi><mi>l</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">rel(y)</annotation></semantics></math>
 there is no other
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mi>e</mi><mi>l</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">rel(y)</annotation></semantics></math>.</p>
+<p>We write
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mi>#</mi><mi>a</mi><mi>c</mi><mi>q</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>k</mi></msub><mo>,</mo><mi>i</mi><mi>#</mi><mi>r</mi><mi>e</mi><mi>l</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>l</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">CS(i\#acq(y)_k,i\#rel(y)_l)</annotation></semantics></math>
+to denote the set of events that are part of the <em>critical
+section</em> for a matching acquire/release pair
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mi>#</mi><mi>a</mi><mi>c</mi><mi>q</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>k</mi></msub><mo>,</mo><mi>i</mi><mi>#</mi><mi>r</mi><mi>e</mi><mi>l</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>l</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(i\#acq(y)_k,i\#rel(y)_l)</annotation></semantics></math>.</p>
+<p>An event
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mi>#</mi><msub><mi>e</mi><mi>m</mi></msub></mrow><annotation encoding="application/x-tex">j\#e_m</annotation></semantics></math>
+is part of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mi>#</mi><mi>a</mi><mi>c</mi><mi>q</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>k</mi></msub><mo>,</mo><mi>i</mi><mi>#</mi><mi>r</mi><mi>e</mi><mi>l</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>l</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">CS(i\#acq(y)_k,i\#rel(y)_l)</annotation></semantics></math>,
+written
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mi>#</mi><msub><mi>e</mi><mi>m</mi></msub><mo>∈</mo><mi>C</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>i</mi><mi>#</mi><mi>a</mi><mi>c</mi><mi>q</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>k</mi></msub><mo>,</mo><mi>i</mi><mi>#</mi><mi>r</mi><mi>e</mi><mi>l</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>l</mi></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">j\#e_m \in CS(i\#acq(y)_k,i\#rel(y)_l)</annotation></semantics></math>
+if</p>
+<ol style="list-style-type: decimal">
+<li><p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mi>#</mi><msub><mi>e</mi><mi>m</mi></msub><mo>=</mo><mi>i</mi><mi>#</mi><mi>a</mi><mi>c</mi><mi>q</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">j\#e_m=i\#acq(y)_k</annotation></semantics></math>,
+or
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>e</mi><mo>=</mo><mo>,</mo><mi>j</mi><mi>#</mi><mi>r</mi><mi>e</mi><mi>l</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>l</mi></msub></mrow><annotation encoding="application/x-tex">e=,j\#rel(y)_l</annotation></semantics></math>,
+or</p></li>
+<li><p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi><mo>=</mo><mi>i</mi></mrow><annotation encoding="application/x-tex">j=i</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>&lt;</mo><mi>m</mi><mo>&lt;</mo><mi>l</mi></mrow><annotation encoding="application/x-tex">k&lt;m&lt;l</annotation></semantics></math>.</p></li>
+</ol>
+<p>The first condition states that
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>c</mi><mi>q</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">acq(y)</annotation></semantics></math>
-event.</p>
-<p><b>Lockset</b>. Let
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mi>e</mi><mi>l</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">rel(y)</annotation></semantics></math>
+are part of the critical section. The second condition states that any
+event inbetween that is in the same thread is also part of this critical
+section.</p>
+<h2 id="lockset-1">Lockset</h2>
+<p>Let
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>e</mi><annotation encoding="application/x-tex">e</annotation></semantics></math>
-be a read or write event. Then, the locket of
+an event. Then, the lockset of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>e</mi><annotation encoding="application/x-tex">e</annotation></semantics></math>,
 written
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>e</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">LS(e)</annotation></semantics></math>,
@@ -169,7 +195,18 @@ consists of all
 where
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>e</mi><annotation encoding="application/x-tex">e</annotation></semantics></math>
 appears within a critical section belonging to lock
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math>.</p>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math>.
+More formally, we define
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>e</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mi>y</mi><mo>∣</mo><mo>∃</mo><mi>a</mi><mo>,</mo><mi>r</mi><mi>.</mi><mi>e</mi><mo>∈</mo><mi>C</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>a</mi><mo>,</mo><mi>r</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">LS(e) = \{ y \mid \exists a, r. e \in CS(a,r) \}</annotation></semantics></math>.</p>
+<p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>∃</mo><mi>a</mi><mo>,</mo><mi>r</mi><mi>.</mi></mrow><annotation encoding="application/x-tex">\exists a, r.</annotation></semantics></math>
+means that we find
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mo>=</mo><mi>i</mi><mi>#</mi><mi>a</mi><mi>c</mi><mi>q</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>k</mi></msub></mrow><annotation encoding="application/x-tex">a=i\#acq(y)_k</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>=</mo><mi>i</mi><mi>#</mi><mi>r</mi><mi>e</mi><mi>l</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mi>l</mi></msub></mrow><annotation encoding="application/x-tex">r=i\#rel(y)_l</annotation></semantics></math>
+where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mi>a</mi><mo>,</mo><mi>r</mi><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(a,r)</annotation></semantics></math>
+is matching pair acquire/release pair.</p>
+<h2 id="example">Example</h2>
 <p>Recall the earlier trace.</p>
 <pre><code>Trace A:
 
@@ -182,15 +219,11 @@ appears within a critical section belonging to lock
 5.               w(x)
 6.               rel(y)</code></pre>
 <p>We find two critical sections for lock variable
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math>.
-In thread T1, we have the critical section identified by
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>c</mi><mi>q</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">acq(y)_2</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mi>e</mi><mi>l</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>3</mn></msub></mrow><annotation encoding="application/x-tex">rel(y)_3</annotation></semantics></math>
-In thread T2, we have the critical section identified by
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>c</mi><mi>q</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>4</mn></msub></mrow><annotation encoding="application/x-tex">acq(y)_4</annotation></semantics></math>
-and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mi>e</mi><mi>l</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>6</mn></msub></mrow><annotation encoding="application/x-tex">rel(y)_6</annotation></semantics></math>.</p>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math>.</p>
+<p>In thread T1, we have the critical section
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>T</mi><mn>1</mn><mi>#</mi><mi>a</mi><mi>c</mi><mi>q</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>2</mn></msub><mo>,</mo><mi>T</mi><mn>1</mn><mi>#</mi><mi>r</mi><mi>e</mi><mi>l</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>3</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">CS(T1\#acq(y)_2, T1\#rel(y)_3)</annotation></semantics></math>.</p>
+<p>In thread T2, we have the critical section
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>T</mi><mn>2</mn><mi>#</mi><mi>a</mi><mi>c</mi><mi>q</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>4</mn></msub><mo>,</mo><mi>T</mi><mn>2</mn><mi>#</mi><mi>r</mi><mi>e</mi><mi>l</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>6</mn></msub><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">CS(T2\#acq(y)_4, T2\#rel(y)_6)</annotation></semantics></math>.</p>
 <p>We consider the locksets of events
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">w(x)_1</annotation></semantics></math>
 and
@@ -277,8 +310,77 @@ achieve <a href="https://arxiv.org/abs/2004.06969">Efficient, Near
 Complete and Often Sound Hybrid Dynamic Data Race Prediction (extended
 version)</a>.</p>
 </div>
-<div id="lockset-based-data-race-predictor-algorithm" class="slide section level1">
-<h1>Lockset based data race predictor algorithm</h1>
+<div id="lockset-computation" class="slide section level1">
+<h1>Lockset computation</h1>
+<p>We maintain the following state variables.</p>
+<pre><code>ls(t)
+
+  The set of locks hold by thread t at a certain time.
+
+LS
+
+  A mapping that records for each event e its lockset.</code></pre>
+<p>We write <code>e@operation</code> to denote that event <code>e</code>
+will be processed by <code>operation</code>.</p>
+<pre><code>e@acq(t,y) {
+   ls(t) = ls(t) cup {y}
+}
+
+e@rel(t,y) {
+ ls(t) = ls(t) - {y}
+
+e@fork(t1,t2) {
+}
+
+e@join(t1,t2) {
+}
+
+e@write(t,x) {
+  LS(e) = ls(t)
+}
+
+e@read(t,x) {
+  LS(e) = ls(t)
+}</code></pre>
+<p>In the above, we write <code>cup</code> to denote set union
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>∪</mo><annotation encoding="application/x-tex">\cup</annotation></semantics></math>.
+For sets S1 and S2 we write S1 - S2 to denote the set that contains all
+elements in S1 that are not in S2.</p>
+<p>We only record the lockset for write and read events.</p>
+<p>We also cover fork and join events. As we can see, the computation of
+locksets is agnostic to the presence of fork and join events.</p>
+<h2 id="observation">Observation</h2>
+<p>Unlike the Lamport’s happens-before that is sensitive to the order of
+critical sections, the computation of locksets is not affected if we
+reorder critical sections.</p>
+<p>Consider trace A.</p>
+<pre><code>     T1          T2
+
+e1.   w(x)
+e2.   acq(y)
+e3.   rel(y)
+e4.               acq(y)
+e5.               w(x)
+e6.               rel(y)</code></pre>
+<p>We find that
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>e</mi><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">LS(e1) = \{ \}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>e</mi><mn>5</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mi>y</mi><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">LS(e5) = \{ y \}</annotation></semantics></math>.</p>
+<p>For the following (valid) reordering</p>
+<pre><code>     T1          T2
+e4.               acq(y)
+e5.               w(x)
+e6.               rel(y)
+e1.   w(x)
+e2.   acq(y)
+e3.   rel(y)</code></pre>
+<p>we again find that
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>e</mi><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">LS(e1) = \{ \}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>e</mi><mn>5</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mi>y</mi><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">LS(e5) = \{ y \}</annotation></semantics></math>.</p>
+</div>
+<div id="further-examples" class="slide section level1">
+<h1>Further examples</h1>
 <p>We annotate the trace with lockset information.</p>
 <h2 id="example-1">Example 1</h2>
 <pre><code>      T0      T1        Lockset
@@ -337,15 +439,15 @@ data race.</p>
 that after the release at trace position 3 there is a go statement to
 create thread T1. For example, the above trace could result from the
 following program.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> <span class="dv">3</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    acq<span class="op">(</span>y<span class="op">)</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    rel<span class="op">(</span>y<span class="op">)</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">go</span> <span class="kw">func</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>y<span class="op">)</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> <span class="dv">4</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>y<span class="op">)</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}()</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    acq<span class="op">(</span>y<span class="op">)</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    rel<span class="op">(</span>y<span class="op">)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">go</span> <span class="kw">func</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>y<span class="op">)</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> <span class="dv">4</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>y<span class="op">)</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}()</span></span></code></pre></div>
 <p>This “fork” information is not recorded in the trace. As we only
 compare locksets, we encounter here another case of a false
 positive.</p>

@@ -96,7 +96,8 @@ Martin Sulzmann
 <div id="overview" class="slide section level1">
 <h1>Overview</h1>
 <p>Things that interest me.</p>
-<h2 id="programming-languages">Programming languages</h2>
+<h2 id="programming-languages-abstractions">Programming languages +
+abstractions</h2>
 <ul>
 <li><a href="https://go.dev/">Go</a>, <a href="https://www.rust-lang.org/">Rust</a>, …</li>
 </ul>
@@ -107,46 +108,176 @@ verification</h2>
 <p>Try to predict “faulty” behavior (such as data races and
 deadlocks).</p>
 </div>
+<div id="retriable-futures" class="slide section level1">
+<h1>“Retriable” futures</h1>
+<p>Consider some booking scenario using our “future” API.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> bookHotel_A<span class="op">()</span> <span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="dt">bool</span><span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> <span class="dv">1</span><span class="op">,</span> <span class="ot">true</span> <span class="op">}</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> bookHotel_B<span class="op">()</span> <span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="dt">bool</span><span class="op">)</span> <span class="op">{</span> <span class="cf">return</span> <span class="dv">2</span><span class="op">,</span> <span class="ot">true</span> <span class="op">}</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> bookTrain<span class="op">()</span> <span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="dt">bool</span><span class="op">)</span>   <span class="op">{</span> <span class="cf">return</span> <span class="dv">3</span><span class="op">,</span> <span class="ot">true</span> <span class="op">}</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> bookBus<span class="op">()</span> <span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="dt">bool</span><span class="op">)</span>     <span class="op">{</span> <span class="cf">return</span> <span class="dv">4</span><span class="op">,</span> <span class="ot">true</span> <span class="op">}</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> booking<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    hotel_A <span class="op">:=</span> future<span class="op">[</span><span class="dt">int</span><span class="op">](</span>bookHotel_A<span class="op">)</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    hotel_B <span class="op">:=</span> future<span class="op">[</span><span class="dt">int</span><span class="op">](</span>bookHotel_B<span class="op">)</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    train <span class="op">:=</span> future<span class="op">[</span><span class="dt">int</span><span class="op">](</span>bookTrain<span class="op">)</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    bus <span class="op">:=</span> future<span class="op">[</span><span class="dt">int</span><span class="op">](</span>bookBus<span class="op">)</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    accommodation <span class="op">:=</span> hotel_A<span class="op">.</span>firstSucc<span class="op">(</span>hotel_B<span class="op">)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    transportation <span class="op">:=</span> train<span class="op">.</span>firstSucc<span class="op">(</span>bus<span class="op">)</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    trip <span class="op">:=</span> transportation<span class="op">.</span>then<span class="op">(</span><span class="kw">func</span><span class="op">(</span>x <span class="dt">int</span><span class="op">)</span> <span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="dt">bool</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        <span class="co">// x ignored</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>        <span class="co">// in a real world setting, some booking code which might be passed to the Hotel</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> accommodation<span class="op">.</span>get<span class="op">()</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    trip<span class="op">.</span>onSuccess<span class="op">(</span><span class="kw">func</span><span class="op">(</span>x <span class="dt">int</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>        fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;We got Hotel and transportation!&quot;</span><span class="op">)</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    time<span class="op">.</span>Sleep<span class="op">(</span><span class="dv">1</span> <span class="op">*</span> time<span class="op">.</span>Second<span class="op">)</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<ul>
+<li><p>First check for transportation</p></li>
+<li><p>Then check for a Hotel</p></li>
+</ul>
+<p>What if we fail!?</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> bookingRetry<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    hotel_A <span class="op">:=</span> future<span class="op">[</span><span class="dt">int</span><span class="op">](</span>bookHotel_A<span class="op">)</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    hotel_B <span class="op">:=</span> future<span class="op">[</span><span class="dt">int</span><span class="op">](</span>bookHotel_B<span class="op">)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    train <span class="op">:=</span> future<span class="op">[</span><span class="dt">int</span><span class="op">](</span>bookTrain<span class="op">)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    bus <span class="op">:=</span> future<span class="op">[</span><span class="dt">int</span><span class="op">](</span>bookBus<span class="op">)</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    accommodation <span class="op">:=</span> hotel_A<span class="op">.</span>firstSucc<span class="op">(</span>hotel_B<span class="op">)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    transportation <span class="op">:=</span> train<span class="op">.</span>firstSucc<span class="op">(</span>bus<span class="op">)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    trip <span class="op">:=</span> transportation<span class="op">.</span>then<span class="op">(</span><span class="kw">func</span><span class="op">(</span>x <span class="dt">int</span><span class="op">)</span> <span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="dt">bool</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        <span class="co">// x ignored</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="co">// in a real world setting, some booking code which might be passed to the Hotel</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> accommodation<span class="op">.</span>get<span class="op">()</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    trip<span class="op">.</span>onSuccess<span class="op">(</span><span class="kw">func</span><span class="op">(</span>x <span class="dt">int</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;We got Hotel and transportation!&quot;</span><span class="op">)</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    trip<span class="op">.</span>onFailure<span class="op">(</span><span class="kw">func</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;Failure, let&#39;s retry!&quot;</span><span class="op">)</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        bookingRetry<span class="op">()</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    time<span class="op">.</span>Sleep<span class="op">(</span><span class="dv">1</span> <span class="op">*</span> time<span class="op">.</span>Second<span class="op">)</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<ul>
+<li><p>We start from scratch!</p></li>
+<li><p>But what if booking of Hotel succedded.</p></li>
+<li><p>Only booking of transportation failed (maybe some booking server
+is done, …)</p></li>
+<li><p>Hence, it seems wasteful to start from scratch</p></li>
+</ul>
+<p>Let’s try to be more “clever”.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> checkTransport<span class="op">(</span>accommodation Future<span class="op">[</span><span class="dt">int</span><span class="op">])</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    accommodation<span class="op">.</span>onSuccess<span class="op">(</span><span class="kw">func</span><span class="op">(</span>x <span class="dt">int</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        train <span class="op">:=</span> future<span class="op">[</span><span class="dt">int</span><span class="op">](</span>bookTrain<span class="op">)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        bus <span class="op">:=</span> future<span class="op">[</span><span class="dt">int</span><span class="op">](</span>bookBus<span class="op">)</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        transportation <span class="op">:=</span> train<span class="op">.</span>firstSucc<span class="op">(</span>bus<span class="op">)</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        transportation<span class="op">.</span>onFailure<span class="op">(</span><span class="kw">func</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>            checkTransport<span class="op">(</span>accommodation<span class="op">)</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">})</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        transportation<span class="op">.</span>onSuccess<span class="op">(</span><span class="kw">func</span><span class="op">(</span>x <span class="dt">int</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;Finally, We got Hotel and transportation!&quot;</span><span class="op">)</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="op">})</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> bookingRetryTryingToBeMoreClever<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    hotel_A <span class="op">:=</span> future<span class="op">[</span><span class="dt">int</span><span class="op">](</span>bookHotel_A<span class="op">)</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    hotel_B <span class="op">:=</span> future<span class="op">[</span><span class="dt">int</span><span class="op">](</span>bookHotel_B<span class="op">)</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    accommodation <span class="op">:=</span> hotel_A<span class="op">.</span>firstSucc<span class="op">(</span>hotel_B<span class="op">)</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    accommodation<span class="op">.</span>onFailure<span class="op">(</span><span class="kw">func</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>        bookingRetryTryingToBeMoreClever<span class="op">()</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    checkTransport<span class="op">(</span>accommodation<span class="op">)</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    time<span class="op">.</span>Sleep<span class="op">(</span><span class="dv">1</span> <span class="op">*</span> time<span class="op">.</span>Second<span class="op">)</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<ul>
+<li><p>Manually check if subcomputations (Hotel/Transport bookings) have
+failed</p></li>
+<li><p>Manually restart these bookings (while maintaining earlier
+subcomputations)</p></li>
+<li><p>Complex control flow (prone to errors)</p></li>
+</ul>
+<h2 id="retriable-futures-1">Retriable futures</h2>
+<div class="sourceCode" id="cb4"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>trip <span class="op">:=</span> transportation<span class="op">.</span>then<span class="op">(</span><span class="kw">func</span><span class="op">(</span>x <span class="dt">int</span><span class="op">)</span> <span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="dt">bool</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> accommodation<span class="op">.</span>get<span class="op">()</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">})</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>tripSucc <span class="op">=</span> trip<span class="op">.</span>retry<span class="op">()</span></span></code></pre></div>
+<p>Some magic <code>retry</code> method.</p>
+<ul>
+<li><p>Retry automatically restarts (sub)computations if the future has
+failed (we could possibly set a limit on the number of
+retries).</p></li>
+<li><p>Retry only restarts failed subcomputations</p></li>
+<li><p>User code remains the same</p></li>
+<li><p>Obviously, the magic lies in the implementation (of retriable
+futures)</p></li>
+</ul>
+<p><em>Some prototype exists</em></p>
+<p><em>Further examples are “first-class events for Go”,…</em></p>
+</div>
 <div id="go-and-its-design-space" class="slide section level1">
 <h1>Go and its design space</h1>
 <h2 id="go-without-generics">Go without Generics</h2>
-<div class="sourceCode" id="cb1"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Stringer <span class="kw">interface</span><span class="op">{</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">}</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> OnOff <span class="kw">struct</span><span class="op">{</span> Value <span class="dt">bool</span> <span class="op">}</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Pair <span class="kw">struct</span> <span class="op">{</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    First  OnOff</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    Second OnOff</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this OnOff<span class="op">)</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> this<span class="op">.</span>Value <span class="op">{</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;on&quot;</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;off&quot;</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this Pair<span class="op">)</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">&quot;(&quot;</span> <span class="op">+</span> this<span class="op">.</span>First<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;, &quot;</span> <span class="op">+</span> this<span class="op">.</span>Second<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> showTwice<span class="op">(</span>x Stringer<span class="op">,</span> y Stringer<span class="op">)</span> <span class="dt">string</span> <span class="op">{</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> y<span class="op">.</span>Show<span class="op">()</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> testShow<span class="op">()</span> <span class="op">{</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    showTwice<span class="op">(</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> Pair<span class="op">{</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> OnOff<span class="op">{</span><span class="ot">false</span><span class="op">}})</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Stringer <span class="kw">interface</span><span class="op">{</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">}</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> OnOff <span class="kw">struct</span><span class="op">{</span> Value <span class="dt">bool</span> <span class="op">}</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Pair <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    First  OnOff</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    Second OnOff</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this OnOff<span class="op">)</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> this<span class="op">.</span>Value <span class="op">{</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;on&quot;</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;off&quot;</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this Pair<span class="op">)</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">&quot;(&quot;</span> <span class="op">+</span> this<span class="op">.</span>First<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;, &quot;</span> <span class="op">+</span> this<span class="op">.</span>Second<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> showTwice<span class="op">(</span>x Stringer<span class="op">,</span> y Stringer<span class="op">)</span> <span class="dt">string</span> <span class="op">{</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> y<span class="op">.</span>Show<span class="op">()</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> testShow<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    showTwice<span class="op">(</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> Pair<span class="op">{</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> OnOff<span class="op">{</span><span class="ot">false</span><span class="op">}})</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <ul>
 <li>Method overloading based on the receiver type</li>
 </ul>
-<div class="sourceCode" id="cb2"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this OnOff<span class="op">)</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this Pair<span class="op">)</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this OnOff<span class="op">)</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this Pair<span class="op">)</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span> <span class="op">...</span> <span class="op">}</span></span></code></pre></div>
 <ul>
 <li>Interfaces to declare methods that share the same receiver</li>
 </ul>
-<div class="sourceCode" id="cb3"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Stringer <span class="kw">interface</span><span class="op">{</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Stringer <span class="kw">interface</span><span class="op">{</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">}</span></span></code></pre></div>
 <ul>
 <li><p>Structural subtyping</p>
 <ul>
@@ -157,19 +288,19 @@ interface</p></li>
 </ul></li>
 </ul>
 <h2 id="go-with-generics">Go with Generics</h2>
-<div class="sourceCode" id="cb4"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> PairG<span class="op">[</span>A Stringer<span class="op">,</span> B Stringer<span class="op">]</span> <span class="kw">struct</span> <span class="op">{</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    First  A</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    Second B</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this PairG<span class="op">[</span>A<span class="op">,</span> B<span class="op">])</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">&quot;(&quot;</span> <span class="op">+</span> this<span class="op">.</span>First<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;, &quot;</span> <span class="op">+</span> this<span class="op">.</span>Second<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> testShowG<span class="op">()</span> <span class="op">{</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;</span><span class="ch">\n</span><span class="st"> %s&quot;</span><span class="op">,</span> showTwice<span class="op">(</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> PairG<span class="op">[</span>OnOff<span class="op">,</span> OnOff<span class="op">]{</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> OnOff<span class="op">{</span><span class="ot">false</span><span class="op">}}))</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> PairG<span class="op">[</span>A Stringer<span class="op">,</span> B Stringer<span class="op">]</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    First  A</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    Second B</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this PairG<span class="op">[</span>A<span class="op">,</span> B<span class="op">])</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">&quot;(&quot;</span> <span class="op">+</span> this<span class="op">.</span>First<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;, &quot;</span> <span class="op">+</span> this<span class="op">.</span>Second<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> testShowG<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;</span><span class="ch">\n</span><span class="st"> %s&quot;</span><span class="op">,</span> showTwice<span class="op">(</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> PairG<span class="op">[</span>OnOff<span class="op">,</span> OnOff<span class="op">]{</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> OnOff<span class="op">{</span><span class="ot">false</span><span class="op">}}))</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <ul>
 <li><p>Every generic type parameter comes with a type bound</p></li>
 <li><p>Type bound <code>any</code> is satisfied by all types</p></li>
@@ -178,14 +309,19 @@ interface</p></li>
 <ul>
 <li>No generic methods, no additional type constraints</li>
 </ul>
-<div class="sourceCode" id="cb5"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// More flexible variant not accepted by Go 1.19</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Pair<span class="op">[</span>A any<span class="op">,</span> B any<span class="op">]</span> <span class="kw">struct</span> <span class="op">{</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  First A</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  Second B</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this Pair<span class="op">[</span>A Stringer<span class="op">,</span> B Stringer<span class="op">])</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="st">&quot;(&quot;</span> <span class="op">+</span> this<span class="op">.</span>First<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;, &quot;</span> <span class="op">+</span> this<span class="op">.</span>Second<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co">// More flexible variant not accepted by Go 1.21</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>ft Future<span class="op">[</span>T<span class="op">])</span> then<span class="op">[</span>S any<span class="op">](</span>f <span class="kw">func</span><span class="op">(</span>T<span class="op">)</span> <span class="op">(</span>S<span class="op">,</span> <span class="dt">bool</span><span class="op">))</span> Future<span class="op">[</span>S<span class="op">]</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co">// More flexible variant not accepted by Go 1.21</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Pair<span class="op">[</span>A any<span class="op">,</span> B any<span class="op">]</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  First A</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  Second B</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this Pair<span class="op">[</span>A Stringer<span class="op">,</span> B Stringer<span class="op">])</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="st">&quot;(&quot;</span> <span class="op">+</span> this<span class="op">.</span>First<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;, &quot;</span> <span class="op">+</span> this<span class="op">.</span>Second<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <ul>
 <li>Lack of type inference, see
 <code>PairG[OnOff, OnOff]{OnOff{true}, OnOff{false}}</code>.</li>
@@ -202,74 +338,74 @@ Translation of Featherweight Go</a></p>
 <p><a href="https://arxiv.org/pdf/2209.08511.pdf">A Type-Directed,
 Dictionary-Passing Translation of Featherweight Generic Go</a></p>
 <h2 id="complete-source-code">Complete source code</h2>
-<div class="sourceCode" id="cb6"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> main</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="st">&quot;fmt&quot;</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Go without generics</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Stringer <span class="kw">interface</span><span class="op">{</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">}</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> OnOff <span class="kw">struct</span><span class="op">{</span> Value <span class="dt">bool</span> <span class="op">}</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Pair <span class="kw">struct</span> <span class="op">{</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    First  OnOff</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    Second OnOff</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this OnOff<span class="op">)</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> this<span class="op">.</span>Value <span class="op">{</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;on&quot;</span></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;off&quot;</span></span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this Pair<span class="op">)</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">&quot;(&quot;</span> <span class="op">+</span> this<span class="op">.</span>First<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;, &quot;</span> <span class="op">+</span> this<span class="op">.</span>Second<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> showTwice<span class="op">(</span>x Stringer<span class="op">,</span> y Stringer<span class="op">)</span> <span class="dt">string</span> <span class="op">{</span></span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> y<span class="op">.</span>Show<span class="op">()</span></span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> testShow<span class="op">()</span> <span class="op">{</span></span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>    fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;</span><span class="ch">\n</span><span class="st"> %s&quot;</span><span class="op">,</span> showTwice<span class="op">(</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> Pair<span class="op">{</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> OnOff<span class="op">{</span><span class="ot">false</span><span class="op">}}))</span></span>
-<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a><span class="co">// Go with generics</span></span>
-<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> PairG<span class="op">[</span>A Stringer<span class="op">,</span> B Stringer<span class="op">]</span> <span class="kw">struct</span> <span class="op">{</span></span>
-<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>    First  A</span>
-<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>    Second B</span>
-<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this PairG<span class="op">[</span>A<span class="op">,</span> B<span class="op">])</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
-<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">&quot;(&quot;</span> <span class="op">+</span> this<span class="op">.</span>First<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;, &quot;</span> <span class="op">+</span> this<span class="op">.</span>Second<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
-<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> testShowG<span class="op">()</span> <span class="op">{</span></span>
-<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>    fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;</span><span class="ch">\n</span><span class="st"> %s&quot;</span><span class="op">,</span> showTwice<span class="op">(</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> PairG<span class="op">[</span>OnOff<span class="op">,</span> OnOff<span class="op">]{</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> OnOff<span class="op">{</span><span class="ot">false</span><span class="op">}}))</span></span>
-<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
-<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a><span class="co">/*</span></span>
-<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a><span class="co">// More flexible variant not accepted by Go 1.19</span></span>
-<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a><span class="co">type Pair[A any, B any] struct {</span></span>
-<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a><span class="co">  First A</span></span>
-<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a><span class="co">  Second B</span></span>
-<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a><span class="co">}</span></span>
-<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a><span class="co">func (this Pair[A Stringer, B Stringer]) Show() string {</span></span>
-<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a><span class="co">  return &quot;(&quot; + this.First.Show() + &quot;, &quot; + this.Second.Show() + &quot;)&quot;</span></span>
-<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a><span class="co">}</span></span>
-<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a><span class="co">*/</span></span>
-<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
-<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a>    testShow<span class="op">()</span></span>
-<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a>    testShowG<span class="op">()</span></span>
-<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> main</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="st">&quot;fmt&quot;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Go without generics</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Stringer <span class="kw">interface</span><span class="op">{</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">}</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> OnOff <span class="kw">struct</span><span class="op">{</span> Value <span class="dt">bool</span> <span class="op">}</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Pair <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    First  OnOff</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    Second OnOff</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this OnOff<span class="op">)</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> this<span class="op">.</span>Value <span class="op">{</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;on&quot;</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;off&quot;</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this Pair<span class="op">)</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">&quot;(&quot;</span> <span class="op">+</span> this<span class="op">.</span>First<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;, &quot;</span> <span class="op">+</span> this<span class="op">.</span>Second<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> showTwice<span class="op">(</span>x Stringer<span class="op">,</span> y Stringer<span class="op">)</span> <span class="dt">string</span> <span class="op">{</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> y<span class="op">.</span>Show<span class="op">()</span></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> testShow<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>    fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;</span><span class="ch">\n</span><span class="st"> %s&quot;</span><span class="op">,</span> showTwice<span class="op">(</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> Pair<span class="op">{</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> OnOff<span class="op">{</span><span class="ot">false</span><span class="op">}}))</span></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a><span class="co">// Go with generics</span></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> PairG<span class="op">[</span>A Stringer<span class="op">,</span> B Stringer<span class="op">]</span> <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>    First  A</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>    Second B</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>this PairG<span class="op">[</span>A<span class="op">,</span> B<span class="op">])</span> Show<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="st">&quot;(&quot;</span> <span class="op">+</span> this<span class="op">.</span>First<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;, &quot;</span> <span class="op">+</span> this<span class="op">.</span>Second<span class="op">.</span>Show<span class="op">()</span> <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> testShowG<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a>    fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;</span><span class="ch">\n</span><span class="st"> %s&quot;</span><span class="op">,</span> showTwice<span class="op">(</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> PairG<span class="op">[</span>OnOff<span class="op">,</span> OnOff<span class="op">]{</span>OnOff<span class="op">{</span><span class="ot">true</span><span class="op">},</span> OnOff<span class="op">{</span><span class="ot">false</span><span class="op">}}))</span></span>
+<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a><span class="co">/*</span></span>
+<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a><span class="co">// More flexible variant not accepted by Go 1.19</span></span>
+<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a><span class="co">type Pair[A any, B any] struct {</span></span>
+<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a><span class="co">  First A</span></span>
+<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a><span class="co">  Second B</span></span>
+<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a><span class="co">}</span></span>
+<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a><span class="co">func (this Pair[A Stringer, B Stringer]) Show() string {</span></span>
+<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a><span class="co">  return &quot;(&quot; + this.First.Show() + &quot;, &quot; + this.Second.Show() + &quot;)&quot;</span></span>
+<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a><span class="co">}</span></span>
+<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a><span class="co">*/</span></span>
+<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a>    testShow<span class="op">()</span></span>
+<span id="cb10-66"><a href="#cb10-66" aria-hidden="true" tabindex="-1"></a>    testShowG<span class="op">()</span></span>
+<span id="cb10-67"><a href="#cb10-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-68"><a href="#cb10-68" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 </div>
 <div id="dynamic-data-race-prediction" class="slide section level1">
 <h1>Dynamic data race prediction</h1>
@@ -457,27 +593,27 @@ locks.</p></li>
 <div id="go-style-mutexes" class="slide section level1">
 <h1>Go style mutexes</h1>
 <p>In Go, ownership of a mutex is not tied to a specific thread.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> m sync<span class="op">.</span>Mutex</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    acq <span class="op">:=</span> <span class="kw">func</span><span class="op">()</span> <span class="op">{</span> m<span class="op">.</span>Lock<span class="op">()</span> <span class="op">}</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    rel <span class="op">:=</span> <span class="kw">func</span><span class="op">()</span> <span class="op">{</span> m<span class="op">.</span>Unlock<span class="op">()</span> <span class="op">}</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">go</span> <span class="kw">func</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">go</span> <span class="kw">func</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>            rel<span class="op">()</span></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;B&quot;</span><span class="op">)</span></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">}()</span></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">()</span></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>        fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;A&quot;</span><span class="op">)</span></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>        time<span class="op">.</span>Sleep<span class="op">(</span><span class="dv">1</span> <span class="op">*</span> time<span class="op">.</span>Second<span class="op">)</span></span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">}()</span></span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>    time<span class="op">.</span>Sleep<span class="op">(</span><span class="dv">2</span> <span class="op">*</span> time<span class="op">.</span>Second<span class="op">)</span></span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>    acq<span class="op">()</span></span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>    rel<span class="op">()</span></span>
-<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>    fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;%d&quot;</span><span class="op">,</span> x<span class="op">)</span> <span class="co">// use x</span></span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> m sync<span class="op">.</span>Mutex</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    acq <span class="op">:=</span> <span class="kw">func</span><span class="op">()</span> <span class="op">{</span> m<span class="op">.</span>Lock<span class="op">()</span> <span class="op">}</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    rel <span class="op">:=</span> <span class="kw">func</span><span class="op">()</span> <span class="op">{</span> m<span class="op">.</span>Unlock<span class="op">()</span> <span class="op">}</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">go</span> <span class="kw">func</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">go</span> <span class="kw">func</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>            rel<span class="op">()</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>            fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;B&quot;</span><span class="op">)</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>        <span class="op">}()</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">()</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>        fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;A&quot;</span><span class="op">)</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>        time<span class="op">.</span>Sleep<span class="op">(</span><span class="dv">1</span> <span class="op">*</span> time<span class="op">.</span>Second<span class="op">)</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">}()</span></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>    time<span class="op">.</span>Sleep<span class="op">(</span><span class="dv">2</span> <span class="op">*</span> time<span class="op">.</span>Second<span class="op">)</span></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>    acq<span class="op">()</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>    rel<span class="op">()</span></span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>    fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;%d&quot;</span><span class="op">,</span> x<span class="op">)</span> <span class="co">// use x</span></span></code></pre></div>
 <p>The resulting trace is as follows (enforced via some sleep
 statements).</p>
 <pre><code>       T1         T2          T3
@@ -490,6 +626,11 @@ statements).</p>
 <ul>
 <li><p>Impact on happens-before race detectors?</p></li>
 <li><p>Impact on computation of lock dependencies?</p></li>
+</ul>
+<p>Another Go feature.</p>
+<ul>
+<li><p>Go supports reader-writer locks</p></li>
+<li><p>This also affects the construction of lock dependencies</p></li>
 </ul>
 </div>
 <div id="if-you-got-interested" class="slide section level1">
