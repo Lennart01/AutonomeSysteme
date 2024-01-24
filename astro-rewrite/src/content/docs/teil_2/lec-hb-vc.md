@@ -700,7 +700,7 @@ Event processing is as follows.
     }
 
     join(t1,t2) {
-      Th(t1) = Th(t2)
+      Th(t1) = sync(Th(t1),Th(t2))
       inc(Th(t1),t1)
       }
 
