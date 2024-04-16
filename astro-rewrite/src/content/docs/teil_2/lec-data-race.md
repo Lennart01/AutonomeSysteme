@@ -312,15 +312,15 @@ also *e* &lt; *g*. Case (b) means that an event cannot happen itself.
 ## Happens-before data race check
 
 If for two conflicting events *e* and *f* we have that neither
-*e* &lt; *f* nor *f* &lt; *e*, then we say that (*e*,*f*) is a *HB data
+*e* &lt; *f* nor *f* &lt; *e*, then we say that (*e*, *f*) is a *HB data
 race pair*.
 
 The argument is that if *e* &lt; *f* nor *f* &lt; *e* we are free to
 reorder the trace such that *e* and *f* appear right next to each other
 (in some reordered trace).
 
-Note. If (*e*,*f*) is a *HB data race pair* then so is (*f*,*e*). In
-such a situation, we consider (*e*,*f*) and (*f*,*e*) as two distinct
+Note. If (*e*, *f*) is a *HB data race pair* then so is (*f*, *e*). In
+such a situation, we consider (*e*, *f*) and (*f*, *e*) as two distinct
 representative for the same data race. When reporting (and counting) HB
 data races we only consider a specific representative.
 
@@ -518,7 +518,7 @@ derived from the above trace are as follows:
 
 Hence, *w*(*x*)<sub>1</sub> and *w*(*x*)<sub>4</sub> are unordered.
 Hence, we find the write-write data race
-(*w*(*x*)<sub>4</sub>,*w*(*x*)<sub>1</sub>).
+(*w*(*x*)<sub>4</sub>, *w*(*x*)<sub>1</sub>).
 
 We reorder the above trace (while maintaining the program order HB
 relations). For the reordered trace we keep the original trace
@@ -606,7 +606,7 @@ sections are mutually exclusive, two conflicting events that share the
 same lock cannot be in a data race.
 
 Hence, if the lockset of two conflicting events *e* and *f* is disjoint
-then we say that (*e*,*f*) is a *Lockset data race pair*.
+then we say that (*e*, *f*) is a *Lockset data race pair*.
 
 ## Lockset computation
 
@@ -1818,9 +1818,9 @@ threads is fixed to *n*.
 We introduce auxiliary functions to (1) increment the time stamp of
 thread *i* and (2) to synchronize two vector clocks.
 
-*i**n**c*(\[*k*<sub>1</sub>,...,*k*<sub>*i* − 1</sub>,*k*<sub>*i*</sub>,*k*<sub>*i* + 1</sub>,...,*k*<sub>*n*</sub>\],*i*) = \[*k*<sub>1</sub>, ..., *k*<sub>*i* − 1</sub>, *k*<sub>*i*</sub> + 1, *k*<sub>*i* + 1</sub>, ..., *k*<sub>*n*</sub>\]
+*i**n**c*(\[*k*<sub>1</sub>, ..., *k*<sub>*i* − 1</sub>, *k*<sub>*i*</sub>, *k*<sub>*i* + 1</sub>, ..., *k*<sub>*n*</sub>\], *i*) = \[*k*<sub>1</sub>, ..., *k*<sub>*i* − 1</sub>, *k*<sub>*i*</sub> + 1, *k*<sub>*i* + 1</sub>, ..., *k*<sub>*n*</sub>\]
 
-*s**y**n**c*(\[*i*<sub>1</sub>,...,*i*<sub>*n*</sub>\],\[*j*<sub>1</sub>,...,*j*<sub>*n*</sub>\]) = \[*m**a**x*(*i*<sub>1</sub>,*j*<sub>1</sub>), ..., *m**a**x*(*i*<sub>*n*</sub>,*j*<sub>*n*</sub>)\]
+*s**y**n**c*(\[*i*<sub>1</sub>, ..., *i*<sub>*n*</sub>\], \[*j*<sub>1</sub>, ..., *j*<sub>*n*</sub>\]) = \[*m**a**x*(*i*<sub>1</sub>, *j*<sub>1</sub>), ..., *m**a**x*(*i*<sub>*n*</sub>, *j*<sub>*n*</sub>)\]
 
 where *m**a**x* computes the maximum of two natural numbers.
 
@@ -1948,21 +1948,21 @@ have detected a HB data race.
 
 We introduce the following auxiliary function.
 
-*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[*i*<sub>1</sub>,...,*i*<sub>*n*</sub>\],\[*j*<sub>1</sub>,...,*j*<sub>*n*</sub>\]) = *t**r**u**e*
+*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[*i*<sub>1</sub>, ..., *i*<sub>*n*</sub>\], \[*j*<sub>1</sub>, ..., *j*<sub>*n*</sub>\]) = *t**r**u**e*
 if *i*<sub>*k*</sub> &lt;  = *j*<sub>*k*</sub> for all *k* = 1...*n* and
 there exists *k* such that *i*<sub>*k*</sub> &lt; *j*<sub>*k*</sub>.
 
-*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[*i*<sub>1</sub>,...,*i*<sub>*n*</sub>\],\[*j*<sub>1</sub>,...,*j*<sub>*n*</sub>\]) = *f**a**l**s**e*
+*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[*i*<sub>1</sub>, ..., *i*<sub>*n*</sub>\], \[*j*<sub>1</sub>, ..., *j*<sub>*n*</sub>\]) = *f**a**l**s**e*
 otherwise.
 
 Examples:
 
-*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[2,1\],\[2,3\]) = *t**r**u**e*
+*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[2, 1\], \[2, 3\]) = *t**r**u**e*
 
-*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[2,1\],\[1,3\]) = *f**a**l**s**e*
+*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[2, 1\], \[1, 3\]) = *f**a**l**s**e*
 
 Instead of
-*h**a**p**p**e**n**s**B**e**f**o**r**e*(*V*<sub>1</sub>,*V*<sub>2</sub>)
+*h**a**p**p**e**n**s**B**e**f**o**r**e*(*V*<sub>1</sub>, *V*<sub>2</sub>)
 we often write *V*<sub>1</sub> &lt; *V*<sub>2</sub> for short.
 
 ## Examples
@@ -1997,10 +1997,10 @@ Consider another trace on which we run algorithm `VC_pre_post`.
     6.                     [2,3]_rel(y)_[2,4]
 
 We encounter the following write-write HB data race pair
-(0\##*w*(*x*)<sub>3</sub>,1\##*w*(*x*)<sub>5</sub>) because neither
+(0\##*w*(*x*)<sub>3</sub>, 1\##*w*(*x*)<sub>5</sub>) because neither
 \[3, 0\] &lt; \[2, 2\] nor \[2, 2\] &lt; \[3, 0\] holds. That is, we
-find that !*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[3,0\],\[2,2\]) and
-!*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[2,2\],\[3,0\]).
+find that !*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[3, 0\], \[2, 2\])
+and !*h**a**p**p**e**n**s**B**e**f**o**r**e*(\[2, 2\], \[3, 0\]).
 
 ## Offline approach summary
 
@@ -2077,15 +2077,15 @@ an event that appears earlier.
 We maintain the following invariant.
 
 For *V*<sub>1</sub>, *V*<sub>2</sub> ∈ *W*(*x*) ∪ *R*(*x*) we have that
-!*h**a**p**p**e**n**s**B**e**f**o**r**e*(*V*<sub>1</sub>,*V*<sub>2</sub>)
+!*h**a**p**p**e**n**s**B**e**f**o**r**e*(*V*<sub>1</sub>, *V*<sub>2</sub>)
 and
-!*h**a**p**p**e**n**s**B**e**f**o**r**e*(*V*<sub>2</sub>,*V*<sub>1</sub>).
+!*h**a**p**p**e**n**s**B**e**f**o**r**e*(*V*<sub>2</sub>, *V*<sub>1</sub>).
 
-Thus, each pair (*V*<sub>1</sub>,*V*<sub>2</sub>) where
+Thus, each pair (*V*<sub>1</sub>, *V*<sub>2</sub>) where
 *V*<sub>1</sub>, *V*<sub>2</sub> ∈ *W*(*x*) represents a write-write HB
 data race (where we identify events via vector clocks).
 
-Each pair (*V*<sub>1</sub>,*V*<sub>2</sub>) where
+Each pair (*V*<sub>1</sub>, *V*<sub>2</sub>) where
 *V*<sub>1</sub> ∈ *W*(*x*) and *V*<sub>2</sub> ∈ *R*(*x*) represents a
 write-read HB data race.
 
@@ -2151,22 +2151,22 @@ information collected by `VC_pre_post` and `VC_W_R_Races`.
     2. [2,0]_w(x)_[3,0]                        { [2,0] }
     3.                     [0,1]_w(x)_[0,2]    { [2,0], [0,1] }       ([2,0], [0,1])
 
-We find the race pair (\[2,0\],\[0,1\]) which corresponds to the pair of
-events (*w*(*x*)<sub>2</sub>,*w*(*x*)<sub>3</sub>). Based on the pre
+We find the race pair (\[2, 0\], \[0, 1\]) which corresponds to the pair
+of events (*w*(*x*)<sub>2</sub>, *w*(*x*)<sub>3</sub>). Based on the pre
 vector clocks provided as annotations in the trace, we find another race
-pair (\[1,0\],\[0,1\]) corresponding to
-(*w*(*x*)<sub>1</sub>,*w*(*x*)<sub>3</sub>). This pair is *not* reported
-by `VC_W_R_Races`.
+pair (\[1, 0\], \[0, 1\]) corresponding to
+(*w*(*x*)<sub>1</sub>, *w*(*x*)<sub>3</sub>). This pair is *not*
+reported by `VC_W_R_Races`.
 
 The issue is that *W*(*x*) only maintains the most recent writes that
 are not in happens before relation. By adding *w*(*x*)<sub>2</sub> (we
 actually add the corresponding vector clock \[2, 0\]), we remove
 *w*(*x*)<sub>1</sub> because \[1, 0\] &lt; \[2, 0\]. By the time we
 process *w*(*x*)<sub>3</sub> we therefore only report the race pair
-(*w*(*x*)<sub>2</sub>,*w*(*x*)<sub>3</sub>).
+(*w*(*x*)<sub>2</sub>, *w*(*x*)<sub>3</sub>).
 
 The offline approach based on algorithm `VC_pre_post` is able to detect
-the write-write data race (*w*(*x*)<sub>1</sub>,*w*(*x*)<sub>3</sub>).
+the write-write data race (*w*(*x*)<sub>1</sub>, *w*(*x*)<sub>3</sub>).
 
 ## Race pairs versus race locations
 
@@ -2231,7 +2231,7 @@ pair. We refer to Th(i) (respectively the corresponding event) as a
 *race location*.
 
 It also immediately follows that race locations cover all race pairs.
-For each race pair (*V*<sub>1</sub>,*V*<sub>2</sub>) reported by
+For each race pair (*V*<sub>1</sub>, *V*<sub>2</sub>) reported by
 `VC_W_R_Races` we have that `VC_RaceLoc` reports the race location
 *V*<sub>2</sub>.
 

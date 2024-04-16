@@ -19,7 +19,7 @@ sections are mutually exclusive, two conflicting events that share the
 same lock cannot be in a data race.
 
 Hence, if the lockset of two conflicting events *e* and *f* is disjoint
-then we say that (*e*,*f*) is a *Lockset data race pair*.
+then we say that (*e*, *f*) is a *Lockset data race pair*.
 
 ## Critical section
 
@@ -35,8 +35,8 @@ Consider acquire event *i*\##*a**c**q*(*y*)<sub>*k*</sub> and release
 event *j*\##*r**e**l*(*y*)<sub>*l*</sub>.
 
 We say that
-(*i*\##*a**c**q*(*y*)<sub>*k*</sub>,*j*\##*r**e**l*(*y*)<sub>*l*</sub>) is
-a *matching acquire/release pair* if
+(*i*\##*a**c**q*(*y*)<sub>*k*</sub>, *j*\##*r**e**l*(*y*)<sub>*l*</sub>)
+is a *matching acquire/release pair* if
 
 1.  *i* = *j*, and
 
@@ -48,15 +48,15 @@ to the same thread. The second condition states that inbetween
 *a**c**q*(*y*) and *r**e**l*(*y*) there is no other *r**e**l*(*y*).
 
 We write
-*C**S*(*i*\##*a**c**q*(*y*)<sub>*k*</sub>,*i*\##*r**e**l*(*y*)<sub>*l*</sub>)
+*C**S*(*i*\##*a**c**q*(*y*)<sub>*k*</sub>, *i*\##*r**e**l*(*y*)<sub>*l*</sub>)
 to denote the set of events that are part of the *critical section* for
 a matching acquire/release pair
-(*i*\##*a**c**q*(*y*)<sub>*k*</sub>,*i*\##*r**e**l*(*y*)<sub>*l*</sub>).
+(*i*\##*a**c**q*(*y*)<sub>*k*</sub>, *i*\##*r**e**l*(*y*)<sub>*l*</sub>).
 
 An event *j*\##*e*<sub>*m*</sub> is part of
-*C**S*(*i*\##*a**c**q*(*y*)<sub>*k*</sub>,*i*\##*r**e**l*(*y*)<sub>*l*</sub>),
+*C**S*(*i*\##*a**c**q*(*y*)<sub>*k*</sub>, *i*\##*r**e**l*(*y*)<sub>*l*</sub>),
 written
-*j*\##*e*<sub>*m*</sub> ∈ *C**S*(*i*\##*a**c**q*(*y*)<sub>*k*</sub>,*i*\##*r**e**l*(*y*)<sub>*l*</sub>)
+*j*\##*e*<sub>*m*</sub> ∈ *C**S*(*i*\##*a**c**q*(*y*)<sub>*k*</sub>, *i*\##*r**e**l*(*y*)<sub>*l*</sub>)
 if
 
 1.  *j*\##*e*<sub>*m*</sub> = *i*\##*a**c**q*(*y*)<sub>*k*</sub>, or
@@ -74,10 +74,10 @@ section.
 Let *e* an event. Then, the lockset of *e*, written *L**S*(*e*),
 consists of all *y*s where *e* appears within a critical section
 belonging to lock *y*. More formally, we define
-*L**S*(*e*) = {*y* ∣ ∃*a*, *r*.*e* ∈ *C**S*(*a*,*r*)}.
+*L**S*(*e*) = {*y* ∣ ∃*a*, *r*.*e* ∈ *C**S*(*a*, *r*)}.
 
 ∃*a*, *r*. means that we find *a* = *i*\##*a**c**q*(*y*)<sub>*k*</sub>
-and *r* = *i*\##*r**e**l*(*y*)<sub>*l*</sub> where (*a*,*r*) is matching
+and *r* = *i*\##*r**e**l*(*y*)<sub>*l*</sub> where (*a*, *r*) is matching
 pair acquire/release pair.
 
 ## Example
@@ -98,10 +98,10 @@ Recall the earlier trace.
 We find two critical sections for lock variable *y*.
 
 In thread T1, we have the critical section
-*C**S*(*T*1\##*a**c**q*(*y*)<sub>2</sub>,*T*1\##*r**e**l*(*y*)<sub>3</sub>).
+*C**S*(*T*1\##*a**c**q*(*y*)<sub>2</sub>, *T*1\##*r**e**l*(*y*)<sub>3</sub>).
 
 In thread T2, we have the critical section
-*C**S*(*T*2\##*a**c**q*(*y*)<sub>4</sub>,*T*2\##*r**e**l*(*y*)<sub>6</sub>).
+*C**S*(*T*2\##*a**c**q*(*y*)<sub>4</sub>, *T*2\##*r**e**l*(*y*)<sub>6</sub>).
 
 We consider the locksets of events *w*(*x*)<sub>1</sub> and
 *w*(*x*)<sub>5</sub>.

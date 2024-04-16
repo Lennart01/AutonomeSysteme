@@ -11,6 +11,7 @@ input_output = [
     html_object("overview.html", PWD + "overview/overview.md", "Autonome Systeme - Um was geht's hier"),
 
     html_object("semWi23-24.html", PWD + "semesterplan/semWi23-24.md", "Autonome Systeme - Winter Semester 23/24"),
+    html_object("semSoSe24.html", PWD + "semesterplan/semSoSe24.md", "Autonome Systeme - Sommer Semester 24"),
 
     html_object("lec-concurrency-go.html", PWD + "teil_1/lec-concurrency-go.md", "Die Programmiersprache Go"),
     html_object("lec-concurrency-models.html", PWD + "teil_1/lec-concurrency-models.md", "Concurrency models"),

@@ -62,7 +62,7 @@ We assume the following events.
 
 Consider the trace
 
-\[1\##*w*(*x*)<sub>1</sub>,1\##*a**c**q*(*y*)<sub>2</sub>,1\##*r**e**l*(*y*)<sub>3</sub>,2\##*a**c**q*(*y*)<sub>4</sub>,2\##*w*(*x*)<sub>5</sub>,2\##*r**e**l*(*y*)<sub>6</sub>\]
+\[1\##*w*(*x*)<sub>1</sub>, 1\##*a**c**q*(*y*)<sub>2</sub>, 1\##*r**e**l*(*y*)<sub>3</sub>, 2\##*a**c**q*(*y*)<sub>4</sub>, 2\##*w*(*x*)<sub>5</sub>, 2\##*r**e**l*(*y*)<sub>6</sub>\]
 
 and its tabular representation
 
@@ -222,7 +222,7 @@ where *i*! = *j* and *n* &gt; 0. Then, we find that
 
 Consider the trace
 
-\[1\##*w*(*x*)<sub>1</sub>,1\##*a**c**q*(*y*)<sub>2</sub>,1\##*r**e**l*(*y*)<sub>3</sub>,2\##*a**c**q*(*y*)<sub>4</sub>,2\##*w*(*x*)<sub>5</sub>,2\##*r**e**l*(*y*)<sub>6</sub>\].
+\[1\##*w*(*x*)<sub>1</sub>, 1\##*a**c**q*(*y*)<sub>2</sub>, 1\##*r**e**l*(*y*)<sub>3</sub>, 2\##*a**c**q*(*y*)<sub>4</sub>, 2\##*w*(*x*)<sub>5</sub>, 2\##*r**e**l*(*y*)<sub>6</sub>\].
 
 Via program order we find that
 
@@ -247,15 +247,15 @@ Hence, by transitivity we can also assume that for example
 ## Happens-before data race check
 
 If for two conflicting events *e* and *f* we have that neither
-*e* &lt; *f* nor *f* &lt; *e*, then we say that (*e*,*f*) is a *HB data
+*e* &lt; *f* nor *f* &lt; *e*, then we say that (*e*, *f*) is a *HB data
 race pair*.
 
 The argument is that if *e* &lt; *f* nor *f* &lt; *e* we are free to
 reorder the trace such that *e* and *f* appear right next to each other
 (in some reordered trace).
 
-Note. If (*e*,*f*) is a *HB data race pair* then so is (*f*,*e*). In
-such a situation, we consider (*e*,*f*) and (*f*,*e*) as two distinct
+Note. If (*e*, *f*) is a *HB data race pair* then so is (*f*, *e*). In
+such a situation, we consider (*e*, *f*) and (*f*, *e*) as two distinct
 representative for the same data race. When reporting (and counting) HB
 data races we only consider a specific representative.
 
@@ -279,8 +279,6 @@ We write `ei` to denote the event at trace position `i`.
     5.               w(x)         ES_e5 = {e1,e2,e3,e4,e5}
     6.               rel(y)       ES_e6 = {e1,e2,e3,e4,e5,e6}
 
-In the above, we write `cup` to denote set union ∪.
-
 Observations:
 
 To enforce the critical section order we simply need to add the event
@@ -299,9 +297,6 @@ in the trace. To decide if *e* and *f* are in a race, we check for
 *e* &lt; *f*). Otherwise, there’s a race.
 
 ## Set-based race predictor
-
-We compute event sets by processing each event in the trace (in the
-order events are recorded).
 
 We maintain the following state variables.
 
@@ -327,8 +322,8 @@ We maintain the following state variables.
 All of the above are sets of events and assumed to be initially empty.
 The exception is W(x). We assume that initially W(x) is undefined.
 
-For each event we call its processing function. We write `e@operation`
-to denote that event `e` will be processed by `operation`.
+We write `e@operation` to denote that event `e` will be processed by
+`operation`.
 
     e@acq(t,y) {
        D(t) = D(t) cup Rel(y) cup { e }
@@ -618,14 +613,14 @@ Based on the above, each event set can be represented as the set
 
 We define a mapping *Φ* from event sets to vector clocks as follows.
 
-*Φ*({1\##*E*<sub>1</sub>,...,*n*\##*E*<sub>*n*</sub>}) = \[*m**a**x*(*E*<sub>1</sub>),...,*m**a**x*(*E*<sub>*n*</sub>)\]
+*Φ*({1\##*E*<sub>1</sub>, ..., *n*\##*E*<sub>*n*</sub>}) = \[*m**a**x*(*E*<sub>1</sub>), ..., *m**a**x*(*E*<sub>*n*</sub>)\]
 
 ### Properties
 
 1.  *D*<sub>*e*</sub> ⊂ *D*<sub>*f*</sub> iff
     *ϕ*(*D*<sub>*e*</sub>) &lt; *ϕ*(*D*<sub>*f*</sub>)
 
-2.  *ϕ*(*D*<sub>*e*</sub>∪*D*<sub>*f*</sub>) = *s**y**n**c*(*ϕ*(*D*<sub>*e*</sub>),*ϕ*(*D*<sub>*f*</sub>))
+2.  *ϕ*(*D*<sub>*e*</sub> ∪ *D*<sub>*f*</sub>) = *s**y**n**c*(*ϕ*(*D*<sub>*e*</sub>), *ϕ*(*D*<sub>*f*</sub>))
 
 3.  Let *e*, *f* be two events where *e* appears before *f* and
     *e* = *i*\##*k*. Then, *e* ∉ *D*<sub>*f*</sub> iff
@@ -681,7 +676,7 @@ Initially, the timestamps in R(x), W(x) and Rel(y) are all set to zero.
 In Th(i), all time stamps are set to zero but the time stamp of the
 entry i which is set to one.
 
-Event processing is as follows.
+Event processing.
 
     acq(t,y) {
       Th(t) = sync(Th(t), Rel(y))
@@ -700,7 +695,7 @@ Event processing is as follows.
     }
 
     join(t1,t2) {
-      Th(t1) = sync(Th(t1),Th(t2))
+      Th(t1) = Th(t2)
       inc(Th(t1),t1)
       }
 
@@ -906,7 +901,7 @@ derived from the above trace are as follows:
 
 Hence, *w*(*x*)<sub>1</sub> and *w*(*x*)<sub>4</sub> are unordered.
 Hence, we find the write-write data race
-(*w*(*x*)<sub>4</sub>,*w*(*x*)<sub>1</sub>).
+(*w*(*x*)<sub>4</sub>, *w*(*x*)<sub>1</sub>).
 
 We reorder the above trace (while maintaining the program order HB
 relations). For the reordered trace we keep the original trace

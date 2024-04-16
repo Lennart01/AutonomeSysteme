@@ -353,18 +353,18 @@ Operations are as follows.
 
 -   Happens-before via vector clocks
 
-    \[*k*<sub>1</sub>,...,*k*<sub>*n*</sub>\] &lt; \[*i*<sub>1</sub>,...,*i*<sub>*n*</sub>\]
+    \[*k*<sub>1</sub>, ..., *k*<sub>*n*</sub>\] &lt; \[*i*<sub>1</sub>, ..., *i*<sub>*n*</sub>\]
     if all *k*<sub>*j*</sub> &lt;  = *i*<sub>*j*</sub> for
     *j* = 1, ..., *n* and there exists *j* such that
     *k*<sub>*j*</sub> &lt; *i*<sub>*j*</sub>
 
 -   Advance time stamp
 
-*i**n**c*(\[*k*<sub>1</sub>,...,*k*<sub>*i* − 1</sub>,*k*<sub>*i*</sub>,*k*<sub>*i* + 1</sub>,...,*k*<sub>*n*</sub>\],*i*) = \[*k*<sub>1</sub>,...,*k*<sub>*i* − 1</sub>,*k*<sub>*i*</sub>+1,*k*<sub>*i* + 1</sub>,...,*k*<sub>*n*</sub>\]
+*i**n**c*(\[*k*<sub>1</sub>, ..., *k*<sub>*i* − 1</sub>, *k*<sub>*i*</sub>, *k*<sub>*i* + 1</sub>, ..., *k*<sub>*n*</sub>\], *i*) = \[*k*<sub>1</sub>, ..., *k*<sub>*i* − 1</sub>, *k*<sub>*i*</sub> + 1, *k*<sub>*i* + 1</sub>, ..., *k*<sub>*n*</sub>\]
 
 -   Synchronize vector clocks
 
-*s**y**n**c*(\[*i*<sub>1</sub>,...,*i*<sub>*n*</sub>\],\[*j*<sub>1</sub>,...,*j*<sub>*n*</sub>\]) = \[*m**a**x*(*i*<sub>1</sub>,*j*<sub>1</sub>),...,*m**a**x*(*i*<sub>*n*</sub>,*j*<sub>*n*</sub>)\]
+*s**y**n**c*(\[*i*<sub>1</sub>, ..., *i*<sub>*n*</sub>\], \[*j*<sub>1</sub>, ..., *j*<sub>*n*</sub>\]) = \[*m**a**x*(*i*<sub>1</sub>, *j*<sub>1</sub>), ..., *m**a**x*(*i*<sub>*n*</sub>, *j*<sub>*n*</sub>)\]
 
 ## Example
 

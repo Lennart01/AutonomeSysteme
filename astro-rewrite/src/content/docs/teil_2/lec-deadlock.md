@@ -243,7 +243,7 @@ are not in S2.
 
 ## Cycle check
 
-We write *D* = (*i**d*,*l*,*l**s*) to refer to some lock dependency in
+We write *D* = (*i**d*, *l*, *l**s*) to refer to some lock dependency in
 thread *i**d* where lock *l* is acquired while holding locks *l**s*.
 
 A deadlock (warning) is issued if there is a cyclic lock dependency
