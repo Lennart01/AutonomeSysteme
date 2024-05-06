@@ -27,6 +27,8 @@ input_output = [
     html_object("lec-lockset.html", PWD + "teil_2/lec-lockset.md", "Dynamic data race prediction - Locksets"),
     html_object("weitereBeispiele.html", PWD + "teil_2/weitereBeispiele.md", "Weitere Beispiele"),
     html_object("lec-go-compact.html", PWD + "teil_1/lec-go-compact.md", "Die Programmiersprache Go - Kurz und knapp"),
+    html_object("lec-program-traces.html", PWD + "teil_2/lec-program-traces.md", "Fehlerszenarien und Programmspuren"),
+    html_object("lec-static-dynamic-analysis.html", PWD + "teil_2/lec-static-dynamic-analysis.md", "Dynamic versus static analysis methods"),
 
     html_object("lec-data-race-examples.html", PWD + "teil_2/lec-data-race-examples.md", "Dynamic data race prediction - TSan and examples"),
     html_object("lec-data-race-summary.html", PWD + "teil_2/lec-data-race-summary.md", "Dynamic data race prediction - Summary"),

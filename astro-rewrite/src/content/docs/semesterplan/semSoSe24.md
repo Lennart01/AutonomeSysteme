@@ -24,8 +24,10 @@ description: Martin Sulzmann
     -   Synchrone versus Asynchrone Kommunikation
     -   Kanäle von Kanälen
     -   Nichtdeterministische Auswahl (“select”)
-    -   Was alles schief gehen kann
     -   Weitere Aufgaben und Zusammenfassung
+-   [Fehlerszenarien und Programmspuren](./../../teil_2/lec-program-traces)
+-   [Dynamic versus static analysis
+    methods](./../../teil_2/lec-static-dynamic-analysis)
 -   Dynamic data race prediction
     -   [Overview](./../../teil_2/lec-data-race-overview)
     -   [Happens-before Methode](./../../teil_2/lec-hb-vc)
