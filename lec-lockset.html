@@ -381,92 +381,556 @@ and
 </div>
 <div id="further-examples" class="slide section level1">
 <h1>Further examples</h1>
-<p>We annotate the trace with lockset information.</p>
+<p>The following examples are automatically generated. Traces are
+annotated with lockset information (for reads/writes only).</p>
 <h2 id="example-1">Example 1</h2>
-<pre><code>      T0      T1        Lockset
-1.   acq(y)
-2.   w(x)              {y}
-3.   rel(y)
-4.   r(x)              {}
-5.           w(x)      {}
-6.           acq(y)
-7.           rel(y)</code></pre>
-<p>Lockset of the two writes on <code>x</code> in thread T0 and T1 are
-disjont. Hence, the lockset method reports that there’s a data race.</p>
+<pre><code>   T0          T1          Lockset
+e1. fork(T1)
+e2. acq(L1)
+e3. wr(V2)                 {L1}
+e4. rel(L1)
+e5.             acq(L1)
+e6.             rel(L1)
+e7.             wr(V2)     {}</code></pre>
+<p>Locksets of the writes are disjoint. Hence, we issue a data race
+warning. This is a true positive.</p>
 <h2 id="example-2">Example 2</h2>
-<pre><code>      T0      T1        Lockset
-1.   w(x)              {}
-2.   acq(y)
-3.   w(x)              {y}
-4.   rel(y)
-5.           acq(y)
-6.           w(x)      {y}
-7.           rel(y)</code></pre>
-<p>The lockset of the write at trace position 1 and the write at trace
-position 6 are disjoint. Hence, we expect that the lockset method
-signals that there is a data race.</p>
-<p>To be efficient, implemementation based on the lockset method only
-keep track of the most recent locksets. That is, each thread maintains a
-list of the most recent reads/writes plus their locksets.</p>
-<p>Applied to the above example, we encounter the following
-behavior.</p>
-<ul>
-<li><p>Thread T0 processes
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>1</mn></msub></mrow><annotation encoding="application/x-tex">w(x)_1</annotation></semantics></math>
-and records that
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>w</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">LS(w(x)) = \{ \}</annotation></semantics></math>.</p></li>
-<li><p>Once thread T0 processes
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mn>3</mn></msub></mrow><annotation encoding="application/x-tex">w(x)_3</annotation></semantics></math>
-and records that
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mi>S</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>w</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mo stretchy="false" form="prefix">{</mo><mi>y</mi><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">LS(w(x)) = \{ y \}</annotation></semantics></math>.</p></li>
-<li><p>This means that the history of earlier locksets for writes on
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math>
-is lost.</p></li>
-<li><p>This means that algorithms that only record locksets for most
-recent writes/reads will not signal a data race here.</p></li>
-</ul>
+<pre><code>   T0          T1          Lockset
+e1. fork(T1)
+e2. acq(L1)
+e3. wr(V2)                 {L1}
+e4. rel(L1)
+e5.             wr(V2)     {}
+e6.             acq(L1)
+e7.             rel(L1)</code></pre>
+<p>Locksets of the writes are disjoint. Hence, we issue a data race
+warning. This is a true positive.</p>
+<h2 id="example-2b">Example 2b</h2>
+<pre><code>   T0          T1          Lockset
+e1. fork(T1)
+e2. acq(L1)
+e3. wr(V2)                 {L1}
+e4. wr(V2)                 {L1}
+e5. rel(L1)
+e6.             wr(V2)     {}
+e7.             acq(L1)
+e8.             rel(L1)</code></pre>
+<p>Each write in thread T0 is in a race with the write in thread T1
+(because their locksets are disjoint).</p>
 <h2 id="example-3">Example 3</h2>
-<pre><code>      T0      T1        Lockset
-1.   w(x)              {}
-2.   acq(y)
-3.   rel(y)
-4.           acq(y)
-5.           w(x)      {y}
-6.           rel(y)</code></pre>
-<p>Locksets are disjoint. Hence, the algorithm signals that there is a
-data race.</p>
-<p>However, in the actual program, thread T0 forks thread T1. We assume
-that after the release at trace position 3 there is a go statement to
-create thread T1. For example, the above trace could result from the
-following program.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> <span class="dv">3</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    acq<span class="op">(</span>y<span class="op">)</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    rel<span class="op">(</span>y<span class="op">)</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">go</span> <span class="kw">func</span><span class="op">()</span> <span class="op">{</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>y<span class="op">)</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> <span class="dv">4</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>y<span class="op">)</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}()</span></span></code></pre></div>
-<p>This “fork” information is not recorded in the trace. As we only
-compare locksets, we encounter here another case of a false
-positive.</p>
+<pre><code>   T0          T1          T2          Lockset
+e1. wr(V2)                             {}
+e2. fork(T1)
+e3. fork(T2)
+e4. rd(V2)                             {}
+e5.             rd(V2)                 {}
+e6.                         acq(L1)
+e7.                         wr(V2)     {L1}
+e8.                         rel(L1)</code></pre>
+<p>Each read (in thread T0 and thread T1) is in a race with the write in
+thread T2 (because their locksets are disjoint).</p>
+<h2 id="example-3b">Example 3b</h2>
+<pre><code>   T0          T1          T2          Lockset
+e1. fork(T1)
+e2. fork(T2)
+e3. wr(V2)                             {}
+e4. rd(V2)                             {}
+e5.             rd(V2)                 {}
+e6.                         acq(L1)
+e7.                         wr(V2)     {L1}
+e8.                         rel(L1)</code></pre>
+<p>The locksets of the write and read in thread T0 are disjoint. This is
+not a race because the write and read take place in the same thread.
+Recall that we only consider pairs of conflicting events where events
+take place in distinct threads and at least one event is a write.</p>
 <h2 id="example-4">Example 4</h2>
-<pre><code>      T0      T1      T2        Lockset
-1.   acq(y)
-2.           w(x)              {}
-3.   rel(y)
-4.                   acq(y)
-5.                   w(x)      {y}
-6.                   rel(y)</code></pre>
-<p>Shouldn’t the lockset at trace position 2 include lock variable
-y!?</p>
-<p>No!</p>
+<pre><code>   T0          T1          Lockset
+e1. fork(T1)
+e2. acq(L1)
+e3. acq(L2)
+e4. wr(V2)                 {L1,L2}
+e5. rel(L2)
+e6. wr(V2)                 {L1}
+e7. rel(L1)
+e8.             acq(L2)
+e9.             wr(V2)     {L2}
+e10.             rel(L2)</code></pre>
+<p>The write e4 in thread T0 is protected by locks L1 and L2. Hence, e4
+is not in a race with the write e9 (their locksets share the common lock
+L2). On the other hand, write e6 is in a race with e9 (there is no
+common lock).</p>
+<h2 id="example-5">Example 5</h2>
+<pre><code>  T0          T1          Lockset
+e1. fork(T1)
+e2. acq(L1)
+e3.             wr(V2)     {}
+e4. wr(V2)                 {L1}
+e5. rel(L1)
+e6.             acq(L1)
+e7.             wr(V2)     {L1}
+e8.             rel(L1)</code></pre>
+<p>Write e3 takes place in thread T1 whereas the acquire and release
+take place in thread T0. There is no synchronization between thread T0
+and thread T1. Hence, the lockset of write e3 is empty. Hence, the write
+e3 is in a race with the write e4 (because their locksets are
+disjoint).</p>
+<h2 id="example-6">Example 6</h2>
+<pre><code>  T0          T1          T2          Lockset
+e1. fork(T1)
+e2. wr(V2)                             {}
+e3. fork(T2)
+e4.                         wr(V2)     {}
+e5.             join(T0)
+e6.             wr(V2)                 {}</code></pre>
+<p>The locksets of all writes are empty. Hence, we would issue the
+following data race warnings.</p>
 <ul>
-<li><p>The write at trace position 2 seems to be protected by lock
-variable y.</p></li>
-<li><p>However, thread T1 does not “own” this lock variable!</p></li>
+<li><p>e2 is in a race with e4</p></li>
+<li><p>e2 is in a race with e6</p></li>
+<li><p>e4 is in a race with e6</p></li>
 </ul>
+<p>The race warning “e2 is in a race with e4” is a false positive. Due
+to the fork event e3, event e2 will always happen before event e4.</p>
+<p>The race warning “e2 is in a race with e6” is a false positive as
+well. Due to the join event e5, event e2 will always happen before
+e6.</p>
+<p>The only true positive is “e4 is in a race with e6”.</p>
+</div>
+<div id="lockset-implementation" class="slide section level1">
+<h1>Lockset implementation</h1>
+<p><a href="https://go.dev/play/p/AqXqUdS1muv">Go playground</a></p>
+<p>Check out main and the examples.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode go"><code class="sourceCode go"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> main</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co">// Lockset-based race predictor</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="st">&quot;fmt&quot;</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="st">&quot;strconv&quot;</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="st">&quot;strings&quot;</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co">// Example traces.</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co">// Traces are assumed to be well-formed.</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co">// For example, if we fork(ti) we assume that thread ti exists.</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> trace_1<span class="op">()</span> <span class="op">[]</span>Event <span class="op">{</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    t0 <span class="op">:=</span> mainThread<span class="op">()</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    t1 <span class="op">:=</span> nextThread<span class="op">(</span>t0<span class="op">)</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    x <span class="op">:=</span> <span class="dv">1</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    z <span class="op">:=</span> <span class="dv">2</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">[]</span>Event<span class="op">{</span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>        fork<span class="op">(</span>t0<span class="op">,</span> t1<span class="op">),</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>t0<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t0<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>t0<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>t1<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>t1<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t1<span class="op">,</span> z<span class="op">)}</span></span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> trace_2<span class="op">()</span> <span class="op">[]</span>Event <span class="op">{</span></span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>    t0 <span class="op">:=</span> mainThread<span class="op">()</span></span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>    t1 <span class="op">:=</span> nextThread<span class="op">(</span>t0<span class="op">)</span></span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>    x <span class="op">:=</span> <span class="dv">1</span></span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>    z <span class="op">:=</span> <span class="dv">2</span></span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">[]</span>Event<span class="op">{</span></span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>        fork<span class="op">(</span>t0<span class="op">,</span> t1<span class="op">),</span></span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>t0<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t0<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>t0<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t1<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>t1<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>t1<span class="op">,</span> x<span class="op">)}</span></span>
+<span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-43"><a href="#cb15-43" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-44"><a href="#cb15-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-45"><a href="#cb15-45" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> trace_2b<span class="op">()</span> <span class="op">[]</span>Event <span class="op">{</span></span>
+<span id="cb15-46"><a href="#cb15-46" aria-hidden="true" tabindex="-1"></a>    t0 <span class="op">:=</span> mainThread<span class="op">()</span></span>
+<span id="cb15-47"><a href="#cb15-47" aria-hidden="true" tabindex="-1"></a>    t1 <span class="op">:=</span> nextThread<span class="op">(</span>t0<span class="op">)</span></span>
+<span id="cb15-48"><a href="#cb15-48" aria-hidden="true" tabindex="-1"></a>    x <span class="op">:=</span> <span class="dv">1</span></span>
+<span id="cb15-49"><a href="#cb15-49" aria-hidden="true" tabindex="-1"></a>    z <span class="op">:=</span> <span class="dv">2</span></span>
+<span id="cb15-50"><a href="#cb15-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">[]</span>Event<span class="op">{</span></span>
+<span id="cb15-51"><a href="#cb15-51" aria-hidden="true" tabindex="-1"></a>        fork<span class="op">(</span>t0<span class="op">,</span> t1<span class="op">),</span></span>
+<span id="cb15-52"><a href="#cb15-52" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>t0<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-53"><a href="#cb15-53" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t0<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-54"><a href="#cb15-54" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t0<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-55"><a href="#cb15-55" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>t0<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-56"><a href="#cb15-56" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t1<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-57"><a href="#cb15-57" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>t1<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-58"><a href="#cb15-58" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>t1<span class="op">,</span> x<span class="op">)}</span></span>
+<span id="cb15-59"><a href="#cb15-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-60"><a href="#cb15-60" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-61"><a href="#cb15-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-62"><a href="#cb15-62" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> trace_3<span class="op">()</span> <span class="op">[]</span>Event <span class="op">{</span></span>
+<span id="cb15-63"><a href="#cb15-63" aria-hidden="true" tabindex="-1"></a>    t0 <span class="op">:=</span> mainThread<span class="op">()</span></span>
+<span id="cb15-64"><a href="#cb15-64" aria-hidden="true" tabindex="-1"></a>    t1 <span class="op">:=</span> nextThread<span class="op">(</span>t0<span class="op">)</span></span>
+<span id="cb15-65"><a href="#cb15-65" aria-hidden="true" tabindex="-1"></a>    t2 <span class="op">:=</span> nextThread<span class="op">(</span>t1<span class="op">)</span></span>
+<span id="cb15-66"><a href="#cb15-66" aria-hidden="true" tabindex="-1"></a>    x <span class="op">:=</span> <span class="dv">1</span></span>
+<span id="cb15-67"><a href="#cb15-67" aria-hidden="true" tabindex="-1"></a>    z <span class="op">:=</span> <span class="dv">2</span></span>
+<span id="cb15-68"><a href="#cb15-68" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">[]</span>Event<span class="op">{</span></span>
+<span id="cb15-69"><a href="#cb15-69" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t0<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-70"><a href="#cb15-70" aria-hidden="true" tabindex="-1"></a>        fork<span class="op">(</span>t0<span class="op">,</span> t1<span class="op">),</span></span>
+<span id="cb15-71"><a href="#cb15-71" aria-hidden="true" tabindex="-1"></a>        fork<span class="op">(</span>t0<span class="op">,</span> t2<span class="op">),</span></span>
+<span id="cb15-72"><a href="#cb15-72" aria-hidden="true" tabindex="-1"></a>        rd<span class="op">(</span>t0<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-73"><a href="#cb15-73" aria-hidden="true" tabindex="-1"></a>        rd<span class="op">(</span>t1<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-74"><a href="#cb15-74" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>t2<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-75"><a href="#cb15-75" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t2<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-76"><a href="#cb15-76" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>t2<span class="op">,</span> x<span class="op">)}</span></span>
+<span id="cb15-77"><a href="#cb15-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-78"><a href="#cb15-78" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-79"><a href="#cb15-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-80"><a href="#cb15-80" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> trace_3b<span class="op">()</span> <span class="op">[]</span>Event <span class="op">{</span></span>
+<span id="cb15-81"><a href="#cb15-81" aria-hidden="true" tabindex="-1"></a>    t0 <span class="op">:=</span> mainThread<span class="op">()</span></span>
+<span id="cb15-82"><a href="#cb15-82" aria-hidden="true" tabindex="-1"></a>    t1 <span class="op">:=</span> nextThread<span class="op">(</span>t0<span class="op">)</span></span>
+<span id="cb15-83"><a href="#cb15-83" aria-hidden="true" tabindex="-1"></a>    t2 <span class="op">:=</span> nextThread<span class="op">(</span>t1<span class="op">)</span></span>
+<span id="cb15-84"><a href="#cb15-84" aria-hidden="true" tabindex="-1"></a>    x <span class="op">:=</span> <span class="dv">1</span></span>
+<span id="cb15-85"><a href="#cb15-85" aria-hidden="true" tabindex="-1"></a>    z <span class="op">:=</span> <span class="dv">2</span></span>
+<span id="cb15-86"><a href="#cb15-86" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">[]</span>Event<span class="op">{</span></span>
+<span id="cb15-87"><a href="#cb15-87" aria-hidden="true" tabindex="-1"></a>        fork<span class="op">(</span>t0<span class="op">,</span> t1<span class="op">),</span></span>
+<span id="cb15-88"><a href="#cb15-88" aria-hidden="true" tabindex="-1"></a>        fork<span class="op">(</span>t0<span class="op">,</span> t2<span class="op">),</span></span>
+<span id="cb15-89"><a href="#cb15-89" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t0<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-90"><a href="#cb15-90" aria-hidden="true" tabindex="-1"></a>        rd<span class="op">(</span>t0<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-91"><a href="#cb15-91" aria-hidden="true" tabindex="-1"></a>        rd<span class="op">(</span>t1<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-92"><a href="#cb15-92" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>t2<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-93"><a href="#cb15-93" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t2<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-94"><a href="#cb15-94" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>t2<span class="op">,</span> x<span class="op">)}</span></span>
+<span id="cb15-95"><a href="#cb15-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-96"><a href="#cb15-96" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-97"><a href="#cb15-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-98"><a href="#cb15-98" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> trace_4<span class="op">()</span> <span class="op">[]</span>Event <span class="op">{</span></span>
+<span id="cb15-99"><a href="#cb15-99" aria-hidden="true" tabindex="-1"></a>    t0 <span class="op">:=</span> mainThread<span class="op">()</span></span>
+<span id="cb15-100"><a href="#cb15-100" aria-hidden="true" tabindex="-1"></a>    t1 <span class="op">:=</span> nextThread<span class="op">(</span>t0<span class="op">)</span></span>
+<span id="cb15-101"><a href="#cb15-101" aria-hidden="true" tabindex="-1"></a>    x <span class="op">:=</span> <span class="dv">1</span></span>
+<span id="cb15-102"><a href="#cb15-102" aria-hidden="true" tabindex="-1"></a>    y <span class="op">:=</span> <span class="dv">2</span></span>
+<span id="cb15-103"><a href="#cb15-103" aria-hidden="true" tabindex="-1"></a>    z <span class="op">:=</span> <span class="dv">2</span></span>
+<span id="cb15-104"><a href="#cb15-104" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">[]</span>Event<span class="op">{</span></span>
+<span id="cb15-105"><a href="#cb15-105" aria-hidden="true" tabindex="-1"></a>        fork<span class="op">(</span>t0<span class="op">,</span> t1<span class="op">),</span></span>
+<span id="cb15-106"><a href="#cb15-106" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>t0<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-107"><a href="#cb15-107" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>t0<span class="op">,</span> y<span class="op">),</span></span>
+<span id="cb15-108"><a href="#cb15-108" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t0<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-109"><a href="#cb15-109" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>t0<span class="op">,</span> y<span class="op">),</span></span>
+<span id="cb15-110"><a href="#cb15-110" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t0<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-111"><a href="#cb15-111" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>t0<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-112"><a href="#cb15-112" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>t1<span class="op">,</span> y<span class="op">),</span></span>
+<span id="cb15-113"><a href="#cb15-113" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t1<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-114"><a href="#cb15-114" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>t1<span class="op">,</span> y<span class="op">)}</span></span>
+<span id="cb15-115"><a href="#cb15-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-116"><a href="#cb15-116" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-117"><a href="#cb15-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-118"><a href="#cb15-118" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> trace_5<span class="op">()</span> <span class="op">[]</span>Event <span class="op">{</span></span>
+<span id="cb15-119"><a href="#cb15-119" aria-hidden="true" tabindex="-1"></a>    t0 <span class="op">:=</span> mainThread<span class="op">()</span></span>
+<span id="cb15-120"><a href="#cb15-120" aria-hidden="true" tabindex="-1"></a>    t1 <span class="op">:=</span> nextThread<span class="op">(</span>t0<span class="op">)</span></span>
+<span id="cb15-121"><a href="#cb15-121" aria-hidden="true" tabindex="-1"></a>    x <span class="op">:=</span> <span class="dv">1</span></span>
+<span id="cb15-122"><a href="#cb15-122" aria-hidden="true" tabindex="-1"></a>    z <span class="op">:=</span> <span class="dv">2</span></span>
+<span id="cb15-123"><a href="#cb15-123" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">[]</span>Event<span class="op">{</span></span>
+<span id="cb15-124"><a href="#cb15-124" aria-hidden="true" tabindex="-1"></a>        fork<span class="op">(</span>t0<span class="op">,</span> t1<span class="op">),</span></span>
+<span id="cb15-125"><a href="#cb15-125" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>t0<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-126"><a href="#cb15-126" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t1<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-127"><a href="#cb15-127" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t0<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-128"><a href="#cb15-128" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>t0<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-129"><a href="#cb15-129" aria-hidden="true" tabindex="-1"></a>        acq<span class="op">(</span>t1<span class="op">,</span> x<span class="op">),</span></span>
+<span id="cb15-130"><a href="#cb15-130" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t1<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-131"><a href="#cb15-131" aria-hidden="true" tabindex="-1"></a>        rel<span class="op">(</span>t1<span class="op">,</span> x<span class="op">)}</span></span>
+<span id="cb15-132"><a href="#cb15-132" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-133"><a href="#cb15-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-134"><a href="#cb15-134" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> trace_6<span class="op">()</span> <span class="op">[]</span>Event <span class="op">{</span></span>
+<span id="cb15-135"><a href="#cb15-135" aria-hidden="true" tabindex="-1"></a>    t0 <span class="op">:=</span> mainThread<span class="op">()</span></span>
+<span id="cb15-136"><a href="#cb15-136" aria-hidden="true" tabindex="-1"></a>    t1 <span class="op">:=</span> nextThread<span class="op">(</span>t0<span class="op">)</span></span>
+<span id="cb15-137"><a href="#cb15-137" aria-hidden="true" tabindex="-1"></a>    t2 <span class="op">:=</span> nextThread<span class="op">(</span>t1<span class="op">)</span></span>
+<span id="cb15-138"><a href="#cb15-138" aria-hidden="true" tabindex="-1"></a>    z <span class="op">:=</span> <span class="dv">2</span></span>
+<span id="cb15-139"><a href="#cb15-139" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">[]</span>Event<span class="op">{</span></span>
+<span id="cb15-140"><a href="#cb15-140" aria-hidden="true" tabindex="-1"></a>        fork<span class="op">(</span>t0<span class="op">,</span> t1<span class="op">),</span></span>
+<span id="cb15-141"><a href="#cb15-141" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t0<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-142"><a href="#cb15-142" aria-hidden="true" tabindex="-1"></a>        fork<span class="op">(</span>t0<span class="op">,</span> t2<span class="op">),</span></span>
+<span id="cb15-143"><a href="#cb15-143" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t2<span class="op">,</span> z<span class="op">),</span></span>
+<span id="cb15-144"><a href="#cb15-144" aria-hidden="true" tabindex="-1"></a>        join<span class="op">(</span>t1<span class="op">,</span> t0<span class="op">),</span></span>
+<span id="cb15-145"><a href="#cb15-145" aria-hidden="true" tabindex="-1"></a>        wr<span class="op">(</span>t1<span class="op">,</span> z<span class="op">)}</span></span>
+<span id="cb15-146"><a href="#cb15-146" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-147"><a href="#cb15-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-148"><a href="#cb15-148" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> main<span class="op">()</span> <span class="op">{</span></span>
+<span id="cb15-149"><a href="#cb15-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-150"><a href="#cb15-150" aria-hidden="true" tabindex="-1"></a>    run<span class="op">(</span>trace_1<span class="op">())</span></span>
+<span id="cb15-151"><a href="#cb15-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-152"><a href="#cb15-152" aria-hidden="true" tabindex="-1"></a>    run<span class="op">(</span>trace_2<span class="op">())</span></span>
+<span id="cb15-153"><a href="#cb15-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-154"><a href="#cb15-154" aria-hidden="true" tabindex="-1"></a>    run<span class="op">(</span>trace_2b<span class="op">())</span></span>
+<span id="cb15-155"><a href="#cb15-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-156"><a href="#cb15-156" aria-hidden="true" tabindex="-1"></a>    run<span class="op">(</span>trace_3<span class="op">())</span></span>
+<span id="cb15-157"><a href="#cb15-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-158"><a href="#cb15-158" aria-hidden="true" tabindex="-1"></a>    run<span class="op">(</span>trace_3b<span class="op">())</span></span>
+<span id="cb15-159"><a href="#cb15-159" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-160"><a href="#cb15-160" aria-hidden="true" tabindex="-1"></a>    run<span class="op">(</span>trace_4<span class="op">())</span></span>
+<span id="cb15-161"><a href="#cb15-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-162"><a href="#cb15-162" aria-hidden="true" tabindex="-1"></a>    run<span class="op">(</span>trace_5<span class="op">())</span></span>
+<span id="cb15-163"><a href="#cb15-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-164"><a href="#cb15-164" aria-hidden="true" tabindex="-1"></a>    run<span class="op">(</span>trace_6<span class="op">())</span></span>
+<span id="cb15-165"><a href="#cb15-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-166"><a href="#cb15-166" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-167"><a href="#cb15-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-168"><a href="#cb15-168" aria-hidden="true" tabindex="-1"></a><span class="co">///////////////////////////////////////////////////////////////</span></span>
+<span id="cb15-169"><a href="#cb15-169" aria-hidden="true" tabindex="-1"></a><span class="co">// Helpers</span></span>
+<span id="cb15-170"><a href="#cb15-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-171"><a href="#cb15-171" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> max<span class="op">(</span>x<span class="op">,</span> y <span class="dt">int</span><span class="op">)</span> <span class="dt">int</span> <span class="op">{</span></span>
+<span id="cb15-172"><a href="#cb15-172" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> x <span class="op">&lt;</span> y <span class="op">{</span></span>
+<span id="cb15-173"><a href="#cb15-173" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> y</span>
+<span id="cb15-174"><a href="#cb15-174" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-175"><a href="#cb15-175" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x</span>
+<span id="cb15-176"><a href="#cb15-176" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-177"><a href="#cb15-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-178"><a href="#cb15-178" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> debug<span class="op">(</span>s <span class="dt">string</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-179"><a href="#cb15-179" aria-hidden="true" tabindex="-1"></a>    fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;%s&quot;</span><span class="op">,</span> s<span class="op">)</span></span>
+<span id="cb15-180"><a href="#cb15-180" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-181"><a href="#cb15-181" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-182"><a href="#cb15-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-183"><a href="#cb15-183" aria-hidden="true" tabindex="-1"></a><span class="co">///////////////////////////////////////////////////////////////</span></span>
+<span id="cb15-184"><a href="#cb15-184" aria-hidden="true" tabindex="-1"></a><span class="co">// Events</span></span>
+<span id="cb15-185"><a href="#cb15-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-186"><a href="#cb15-186" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> EvtKind <span class="dt">int</span></span>
+<span id="cb15-187"><a href="#cb15-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-188"><a href="#cb15-188" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> <span class="op">(</span></span>
+<span id="cb15-189"><a href="#cb15-189" aria-hidden="true" tabindex="-1"></a>    AcquireEvt EvtKind <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb15-190"><a href="#cb15-190" aria-hidden="true" tabindex="-1"></a>    ReleaseEvt EvtKind <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb15-191"><a href="#cb15-191" aria-hidden="true" tabindex="-1"></a>    WriteEvt   EvtKind <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb15-192"><a href="#cb15-192" aria-hidden="true" tabindex="-1"></a>    ReadEvt    EvtKind <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb15-193"><a href="#cb15-193" aria-hidden="true" tabindex="-1"></a>    ForkEvt    EvtKind <span class="op">=</span> <span class="dv">4</span></span>
+<span id="cb15-194"><a href="#cb15-194" aria-hidden="true" tabindex="-1"></a>    JoinEvt    EvtKind <span class="op">=</span> <span class="dv">5</span></span>
+<span id="cb15-195"><a href="#cb15-195" aria-hidden="true" tabindex="-1"></a><span class="op">)</span></span>
+<span id="cb15-196"><a href="#cb15-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-197"><a href="#cb15-197" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Event <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb15-198"><a href="#cb15-198" aria-hidden="true" tabindex="-1"></a>    k_  EvtKind</span>
+<span id="cb15-199"><a href="#cb15-199" aria-hidden="true" tabindex="-1"></a>    id_ <span class="dt">int</span></span>
+<span id="cb15-200"><a href="#cb15-200" aria-hidden="true" tabindex="-1"></a>    a_  <span class="dt">int</span></span>
+<span id="cb15-201"><a href="#cb15-201" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-202"><a href="#cb15-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-203"><a href="#cb15-203" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>e Event<span class="op">)</span> thread<span class="op">()</span> <span class="dt">int</span>   <span class="op">{</span> <span class="cf">return</span> e<span class="op">.</span>id_ <span class="op">}</span></span>
+<span id="cb15-204"><a href="#cb15-204" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>e Event<span class="op">)</span> kind<span class="op">()</span> EvtKind <span class="op">{</span> <span class="cf">return</span> e<span class="op">.</span>k_ <span class="op">}</span></span>
+<span id="cb15-205"><a href="#cb15-205" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>e Event<span class="op">)</span> arg<span class="op">()</span> <span class="dt">int</span>      <span class="op">{</span> <span class="cf">return</span> e<span class="op">.</span>a_ <span class="op">}</span></span>
+<span id="cb15-206"><a href="#cb15-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-207"><a href="#cb15-207" aria-hidden="true" tabindex="-1"></a><span class="co">// Some convenience functions.</span></span>
+<span id="cb15-208"><a href="#cb15-208" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> rd<span class="op">(</span>i <span class="dt">int</span><span class="op">,</span> a <span class="dt">int</span><span class="op">)</span> Event <span class="op">{</span></span>
+<span id="cb15-209"><a href="#cb15-209" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Event<span class="op">{</span>ReadEvt<span class="op">,</span> i<span class="op">,</span> a<span class="op">}</span></span>
+<span id="cb15-210"><a href="#cb15-210" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-211"><a href="#cb15-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-212"><a href="#cb15-212" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> wr<span class="op">(</span>i <span class="dt">int</span><span class="op">,</span> a <span class="dt">int</span><span class="op">)</span> Event <span class="op">{</span></span>
+<span id="cb15-213"><a href="#cb15-213" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Event<span class="op">{</span>WriteEvt<span class="op">,</span> i<span class="op">,</span> a<span class="op">}</span></span>
+<span id="cb15-214"><a href="#cb15-214" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-215"><a href="#cb15-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-216"><a href="#cb15-216" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> acq<span class="op">(</span>i <span class="dt">int</span><span class="op">,</span> a <span class="dt">int</span><span class="op">)</span> Event <span class="op">{</span></span>
+<span id="cb15-217"><a href="#cb15-217" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Event<span class="op">{</span>AcquireEvt<span class="op">,</span> i<span class="op">,</span> a<span class="op">}</span></span>
+<span id="cb15-218"><a href="#cb15-218" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-219"><a href="#cb15-219" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-220"><a href="#cb15-220" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> rel<span class="op">(</span>i <span class="dt">int</span><span class="op">,</span> a <span class="dt">int</span><span class="op">)</span> Event <span class="op">{</span></span>
+<span id="cb15-221"><a href="#cb15-221" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Event<span class="op">{</span>ReleaseEvt<span class="op">,</span> i<span class="op">,</span> a<span class="op">}</span></span>
+<span id="cb15-222"><a href="#cb15-222" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-223"><a href="#cb15-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-224"><a href="#cb15-224" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> fork<span class="op">(</span>i <span class="dt">int</span><span class="op">,</span> a <span class="dt">int</span><span class="op">)</span> Event <span class="op">{</span></span>
+<span id="cb15-225"><a href="#cb15-225" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Event<span class="op">{</span>ForkEvt<span class="op">,</span> i<span class="op">,</span> a<span class="op">}</span></span>
+<span id="cb15-226"><a href="#cb15-226" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-227"><a href="#cb15-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-228"><a href="#cb15-228" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> join<span class="op">(</span>i <span class="dt">int</span><span class="op">,</span> a <span class="dt">int</span><span class="op">)</span> Event <span class="op">{</span></span>
+<span id="cb15-229"><a href="#cb15-229" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Event<span class="op">{</span>JoinEvt<span class="op">,</span> i<span class="op">,</span> a<span class="op">}</span></span>
+<span id="cb15-230"><a href="#cb15-230" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-231"><a href="#cb15-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-232"><a href="#cb15-232" aria-hidden="true" tabindex="-1"></a><span class="co">// Trace assumptions.</span></span>
+<span id="cb15-233"><a href="#cb15-233" aria-hidden="true" tabindex="-1"></a><span class="co">// Initial thread starts with 0. Threads have ids in ascending order.</span></span>
+<span id="cb15-234"><a href="#cb15-234" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-235"><a href="#cb15-235" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> trace_info<span class="op">(</span>es <span class="op">[]</span>Event<span class="op">)</span> <span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="kw">map</span><span class="op">[</span><span class="dt">int</span><span class="op">]</span><span class="dt">bool</span><span class="op">,</span> <span class="kw">map</span><span class="op">[</span><span class="dt">int</span><span class="op">]</span><span class="dt">bool</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-236"><a href="#cb15-236" aria-hidden="true" tabindex="-1"></a>    max_tid <span class="op">:=</span> <span class="dv">0</span></span>
+<span id="cb15-237"><a href="#cb15-237" aria-hidden="true" tabindex="-1"></a>    vars <span class="op">:=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">int</span><span class="op">]</span><span class="dt">bool</span><span class="op">{}</span></span>
+<span id="cb15-238"><a href="#cb15-238" aria-hidden="true" tabindex="-1"></a>    locks <span class="op">:=</span> <span class="kw">map</span><span class="op">[</span><span class="dt">int</span><span class="op">]</span><span class="dt">bool</span><span class="op">{}</span></span>
+<span id="cb15-239"><a href="#cb15-239" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _<span class="op">,</span> e <span class="op">:=</span> <span class="kw">range</span> es <span class="op">{</span></span>
+<span id="cb15-240"><a href="#cb15-240" aria-hidden="true" tabindex="-1"></a>        max_tid <span class="op">=</span> max<span class="op">(</span>max_tid<span class="op">,</span> e<span class="op">.</span>thread<span class="op">())</span></span>
+<span id="cb15-241"><a href="#cb15-241" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> WriteEvt <span class="op">||</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> ReadEvt <span class="op">{</span></span>
+<span id="cb15-242"><a href="#cb15-242" aria-hidden="true" tabindex="-1"></a>            vars<span class="op">[</span>e<span class="op">.</span>arg<span class="op">()]</span> <span class="op">=</span> <span class="ot">true</span></span>
+<span id="cb15-243"><a href="#cb15-243" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb15-244"><a href="#cb15-244" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> AcquireEvt <span class="op">{</span> <span class="co">// For each rel(x) there must exists some acq(x)</span></span>
+<span id="cb15-245"><a href="#cb15-245" aria-hidden="true" tabindex="-1"></a>            locks<span class="op">[</span>e<span class="op">.</span>arg<span class="op">()]</span> <span class="op">=</span> <span class="ot">true</span></span>
+<span id="cb15-246"><a href="#cb15-246" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb15-247"><a href="#cb15-247" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-248"><a href="#cb15-248" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> max_tid<span class="op">,</span> vars<span class="op">,</span> locks</span>
+<span id="cb15-249"><a href="#cb15-249" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-250"><a href="#cb15-250" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-251"><a href="#cb15-251" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> mainThread<span class="op">()</span> <span class="dt">int</span>      <span class="op">{</span> <span class="cf">return</span> <span class="dv">0</span> <span class="op">}</span></span>
+<span id="cb15-252"><a href="#cb15-252" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> nextThread<span class="op">(</span>i <span class="dt">int</span><span class="op">)</span> <span class="dt">int</span> <span class="op">{</span> <span class="cf">return</span> i <span class="op">+</span> <span class="dv">1</span> <span class="op">}</span></span>
+<span id="cb15-253"><a href="#cb15-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-254"><a href="#cb15-254" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> <span class="op">(</span></span>
+<span id="cb15-255"><a href="#cb15-255" aria-hidden="true" tabindex="-1"></a>    ROW_OFFSET <span class="op">=</span> <span class="dv">14</span></span>
+<span id="cb15-256"><a href="#cb15-256" aria-hidden="true" tabindex="-1"></a><span class="op">)</span></span>
+<span id="cb15-257"><a href="#cb15-257" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-258"><a href="#cb15-258" aria-hidden="true" tabindex="-1"></a><span class="co">// Omit thread + loc info.</span></span>
+<span id="cb15-259"><a href="#cb15-259" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> displayEvtSimple<span class="op">(</span>e Event<span class="op">)</span> <span class="dt">string</span> <span class="op">{</span></span>
+<span id="cb15-260"><a href="#cb15-260" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> s <span class="dt">string</span></span>
+<span id="cb15-261"><a href="#cb15-261" aria-hidden="true" tabindex="-1"></a>    arg <span class="op">:=</span> strconv<span class="op">.</span>Itoa<span class="op">(</span>e<span class="op">.</span>arg<span class="op">())</span></span>
+<span id="cb15-262"><a href="#cb15-262" aria-hidden="true" tabindex="-1"></a>    <span class="cf">switch</span> <span class="op">{</span></span>
+<span id="cb15-263"><a href="#cb15-263" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> AcquireEvt<span class="op">:</span></span>
+<span id="cb15-264"><a href="#cb15-264" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> <span class="st">&quot;acq(L&quot;</span> <span class="op">+</span> arg <span class="op">+</span> <span class="st">&quot;)&quot;</span> <span class="co">// L(ock)</span></span>
+<span id="cb15-265"><a href="#cb15-265" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> ReleaseEvt<span class="op">:</span></span>
+<span id="cb15-266"><a href="#cb15-266" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> <span class="st">&quot;rel(L&quot;</span> <span class="op">+</span> arg <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
+<span id="cb15-267"><a href="#cb15-267" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> WriteEvt<span class="op">:</span></span>
+<span id="cb15-268"><a href="#cb15-268" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> <span class="st">&quot;wr(V&quot;</span> <span class="op">+</span> arg <span class="op">+</span> <span class="st">&quot;)&quot;</span> <span class="co">// V(ar)</span></span>
+<span id="cb15-269"><a href="#cb15-269" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> ReadEvt<span class="op">:</span></span>
+<span id="cb15-270"><a href="#cb15-270" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> <span class="st">&quot;rd(V&quot;</span> <span class="op">+</span> arg <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
+<span id="cb15-271"><a href="#cb15-271" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> ForkEvt<span class="op">:</span></span>
+<span id="cb15-272"><a href="#cb15-272" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> <span class="st">&quot;fork(T&quot;</span> <span class="op">+</span> arg <span class="op">+</span> <span class="st">&quot;)&quot;</span> <span class="co">// T(hread)</span></span>
+<span id="cb15-273"><a href="#cb15-273" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> JoinEvt<span class="op">:</span></span>
+<span id="cb15-274"><a href="#cb15-274" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> <span class="st">&quot;join(T&quot;</span> <span class="op">+</span> arg <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
+<span id="cb15-275"><a href="#cb15-275" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-276"><a href="#cb15-276" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s</span>
+<span id="cb15-277"><a href="#cb15-277" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-278"><a href="#cb15-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-279"><a href="#cb15-279" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> colOffset<span class="op">(</span>i <span class="dt">int</span><span class="op">,</span> row_offset <span class="dt">int</span><span class="op">)</span> <span class="dt">string</span> <span class="op">{</span></span>
+<span id="cb15-280"><a href="#cb15-280" aria-hidden="true" tabindex="-1"></a>    n <span class="op">:=</span> <span class="op">(</span><span class="dt">int</span><span class="op">)(</span>i<span class="op">)</span></span>
+<span id="cb15-281"><a href="#cb15-281" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> strings<span class="op">.</span>Repeat<span class="op">(</span><span class="st">&quot; &quot;</span><span class="op">,</span> n<span class="op">*</span>row_offset<span class="op">)</span></span>
+<span id="cb15-282"><a href="#cb15-282" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-283"><a href="#cb15-283" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-284"><a href="#cb15-284" aria-hidden="true" tabindex="-1"></a><span class="co">// Thread ids fully cover [0..n]</span></span>
+<span id="cb15-285"><a href="#cb15-285" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> displayTraceWithLS<span class="op">(</span>m <span class="dt">int</span><span class="op">,</span> es <span class="op">[]</span>Event<span class="op">,</span> evt_ls <span class="kw">map</span><span class="op">[</span><span class="dt">int</span><span class="op">]</span>LS<span class="op">,</span> row_offset <span class="dt">int</span><span class="op">)</span> <span class="dt">string</span> <span class="op">{</span></span>
+<span id="cb15-286"><a href="#cb15-286" aria-hidden="true" tabindex="-1"></a>    s <span class="op">:=</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb15-287"><a href="#cb15-287" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i<span class="op">,</span> e <span class="op">:=</span> <span class="kw">range</span> es <span class="op">{</span></span>
+<span id="cb15-288"><a href="#cb15-288" aria-hidden="true" tabindex="-1"></a>        ls_info <span class="op">:=</span> <span class="st">&quot;     &quot;</span></span>
+<span id="cb15-289"><a href="#cb15-289" aria-hidden="true" tabindex="-1"></a>        _<span class="op">,</span> ok <span class="op">:=</span> evt_ls<span class="op">[</span>i<span class="op">]</span></span>
+<span id="cb15-290"><a href="#cb15-290" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> ok <span class="op">{</span></span>
+<span id="cb15-291"><a href="#cb15-291" aria-hidden="true" tabindex="-1"></a>            ls_info <span class="op">+=</span> evt_ls<span class="op">[</span>i<span class="op">].</span>display<span class="op">()</span></span>
+<span id="cb15-292"><a href="#cb15-292" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb15-293"><a href="#cb15-293" aria-hidden="true" tabindex="-1"></a>        row <span class="op">:=</span> <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span> <span class="op">+</span> <span class="st">&quot;e&quot;</span> <span class="op">+</span> strconv<span class="op">.</span>Itoa<span class="op">(</span>i<span class="op">+</span><span class="dv">1</span><span class="op">)</span> <span class="op">+</span> <span class="st">&quot;. &quot;</span> <span class="op">+</span> colOffset<span class="op">(</span>e<span class="op">.</span>thread<span class="op">(),</span> row_offset<span class="op">)</span> <span class="op">+</span> displayEvtSimple<span class="op">(</span>e<span class="op">)</span> <span class="op">+</span> colOffset<span class="op">(</span>m<span class="op">-</span>e<span class="op">.</span>thread<span class="op">(),</span> row_offset<span class="op">)</span> <span class="op">+</span> ls_info</span>
+<span id="cb15-294"><a href="#cb15-294" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> s <span class="op">+</span> row</span>
+<span id="cb15-295"><a href="#cb15-295" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-296"><a href="#cb15-296" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Add column headings.</span></span>
+<span id="cb15-297"><a href="#cb15-297" aria-hidden="true" tabindex="-1"></a>    heading <span class="op">:=</span> <span class="st">&quot;   &quot;</span></span>
+<span id="cb15-298"><a href="#cb15-298" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="op">:=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;=</span> m<span class="op">;</span> i<span class="op">++</span> <span class="op">{</span></span>
+<span id="cb15-299"><a href="#cb15-299" aria-hidden="true" tabindex="-1"></a>        heading <span class="op">+=</span> <span class="st">&quot;T&quot;</span> <span class="op">+</span> strconv<span class="op">.</span>Itoa<span class="op">(</span>i<span class="op">)</span> <span class="op">+</span> strings<span class="op">.</span>Repeat<span class="op">(</span><span class="st">&quot; &quot;</span><span class="op">,</span> row_offset<span class="dv">-2</span><span class="op">)</span></span>
+<span id="cb15-300"><a href="#cb15-300" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-301"><a href="#cb15-301" aria-hidden="true" tabindex="-1"></a>    heading <span class="op">+=</span> <span class="st">&quot;Lockset&quot;</span></span>
+<span id="cb15-302"><a href="#cb15-302" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> heading <span class="op">+</span> s</span>
+<span id="cb15-303"><a href="#cb15-303" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-304"><a href="#cb15-304" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s</span>
+<span id="cb15-305"><a href="#cb15-305" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-306"><a href="#cb15-306" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-307"><a href="#cb15-307" aria-hidden="true" tabindex="-1"></a><span class="co">///////////////////////////////////////////////////////////////</span></span>
+<span id="cb15-308"><a href="#cb15-308" aria-hidden="true" tabindex="-1"></a><span class="co">// Lock sets</span></span>
+<span id="cb15-309"><a href="#cb15-309" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-310"><a href="#cb15-310" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> LS <span class="kw">map</span><span class="op">[</span><span class="dt">int</span><span class="op">]</span><span class="dt">bool</span> <span class="co">//</span></span>
+<span id="cb15-311"><a href="#cb15-311" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-312"><a href="#cb15-312" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>ls LS<span class="op">)</span> add<span class="op">(</span>x <span class="dt">int</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-313"><a href="#cb15-313" aria-hidden="true" tabindex="-1"></a>    ls<span class="op">[</span>x<span class="op">]</span> <span class="op">=</span> <span class="ot">true</span></span>
+<span id="cb15-314"><a href="#cb15-314" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-315"><a href="#cb15-315" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-316"><a href="#cb15-316" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>ls LS<span class="op">)</span> remove<span class="op">(</span>x <span class="dt">int</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-317"><a href="#cb15-317" aria-hidden="true" tabindex="-1"></a>    <span class="bu">delete</span><span class="op">(</span>ls<span class="op">,</span> x<span class="op">)</span></span>
+<span id="cb15-318"><a href="#cb15-318" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-319"><a href="#cb15-319" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-320"><a href="#cb15-320" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>ls LS<span class="op">)</span> display<span class="op">()</span> <span class="dt">string</span> <span class="op">{</span></span>
+<span id="cb15-321"><a href="#cb15-321" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> s <span class="dt">string</span></span>
+<span id="cb15-322"><a href="#cb15-322" aria-hidden="true" tabindex="-1"></a>    i <span class="op">:=</span> <span class="bu">len</span><span class="op">(</span>ls<span class="op">)</span></span>
+<span id="cb15-323"><a href="#cb15-323" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="st">&quot;{&quot;</span></span>
+<span id="cb15-324"><a href="#cb15-324" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> lock<span class="op">,</span> _ <span class="op">:=</span> <span class="kw">range</span> ls <span class="op">{</span></span>
+<span id="cb15-325"><a href="#cb15-325" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-326"><a href="#cb15-326" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> i <span class="op">&gt;</span> <span class="dv">1</span> <span class="op">{</span></span>
+<span id="cb15-327"><a href="#cb15-327" aria-hidden="true" tabindex="-1"></a>            s <span class="op">=</span> s <span class="op">+</span> <span class="st">&quot;L&quot;</span> <span class="op">+</span> strconv<span class="op">.</span>Itoa<span class="op">(</span>lock<span class="op">)</span> <span class="op">+</span> <span class="st">&quot;,&quot;</span></span>
+<span id="cb15-328"><a href="#cb15-328" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-329"><a href="#cb15-329" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb15-330"><a href="#cb15-330" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> i <span class="op">==</span> <span class="dv">1</span> <span class="op">{</span></span>
+<span id="cb15-331"><a href="#cb15-331" aria-hidden="true" tabindex="-1"></a>            s <span class="op">=</span> s <span class="op">+</span> <span class="st">&quot;L&quot;</span> <span class="op">+</span> strconv<span class="op">.</span>Itoa<span class="op">(</span>lock<span class="op">)</span></span>
+<span id="cb15-332"><a href="#cb15-332" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb15-333"><a href="#cb15-333" aria-hidden="true" tabindex="-1"></a>        i<span class="op">--</span></span>
+<span id="cb15-334"><a href="#cb15-334" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-335"><a href="#cb15-335" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s <span class="op">+</span> <span class="st">&quot;}&quot;</span></span>
+<span id="cb15-336"><a href="#cb15-336" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-337"><a href="#cb15-337" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-338"><a href="#cb15-338" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> copyLS<span class="op">(</span>ls LS<span class="op">)</span> LS <span class="op">{</span></span>
+<span id="cb15-339"><a href="#cb15-339" aria-hidden="true" tabindex="-1"></a>    <span class="bu">new</span> <span class="op">:=</span> <span class="bu">make</span><span class="op">(</span><span class="kw">map</span><span class="op">[</span><span class="dt">int</span><span class="op">]</span><span class="dt">bool</span><span class="op">)</span></span>
+<span id="cb15-340"><a href="#cb15-340" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> lock<span class="op">,</span> _ <span class="op">:=</span> <span class="kw">range</span> ls <span class="op">{</span></span>
+<span id="cb15-341"><a href="#cb15-341" aria-hidden="true" tabindex="-1"></a>        <span class="bu">new</span><span class="op">[</span>lock<span class="op">]</span> <span class="op">=</span> <span class="ot">true</span></span>
+<span id="cb15-342"><a href="#cb15-342" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-343"><a href="#cb15-343" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-344"><a href="#cb15-344" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">new</span></span>
+<span id="cb15-345"><a href="#cb15-345" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-346"><a href="#cb15-346" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-347"><a href="#cb15-347" aria-hidden="true" tabindex="-1"></a><span class="co">///////////////////////////////////////////////////////////////</span></span>
+<span id="cb15-348"><a href="#cb15-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-349"><a href="#cb15-349" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> State <span class="kw">struct</span> <span class="op">{</span></span>
+<span id="cb15-350"><a href="#cb15-350" aria-hidden="true" tabindex="-1"></a>    th_lockset  <span class="kw">map</span><span class="op">[</span><span class="dt">int</span><span class="op">]</span>LS <span class="co">// key = thread id</span></span>
+<span id="cb15-351"><a href="#cb15-351" aria-hidden="true" tabindex="-1"></a>    evt_lockset <span class="kw">map</span><span class="op">[</span><span class="dt">int</span><span class="op">]</span>LS <span class="co">// key = trace position</span></span>
+<span id="cb15-352"><a href="#cb15-352" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-353"><a href="#cb15-353" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-354"><a href="#cb15-354" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> run<span class="op">(</span>es <span class="op">[]</span>Event<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-355"><a href="#cb15-355" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-356"><a href="#cb15-356" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> s State</span>
+<span id="cb15-357"><a href="#cb15-357" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-358"><a href="#cb15-358" aria-hidden="true" tabindex="-1"></a>    s<span class="op">.</span>th_lockset <span class="op">=</span> <span class="bu">make</span><span class="op">(</span><span class="kw">map</span><span class="op">[</span><span class="dt">int</span><span class="op">]</span>LS<span class="op">)</span></span>
+<span id="cb15-359"><a href="#cb15-359" aria-hidden="true" tabindex="-1"></a>    s<span class="op">.</span>evt_lockset <span class="op">=</span> <span class="bu">make</span><span class="op">(</span><span class="kw">map</span><span class="op">[</span><span class="dt">int</span><span class="op">]</span>LS<span class="op">)</span></span>
+<span id="cb15-360"><a href="#cb15-360" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-361"><a href="#cb15-361" aria-hidden="true" tabindex="-1"></a>    max_tid <span class="op">:=</span> <span class="dv">0</span></span>
+<span id="cb15-362"><a href="#cb15-362" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-363"><a href="#cb15-363" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _<span class="op">,</span> e <span class="op">:=</span> <span class="kw">range</span> es <span class="op">{</span></span>
+<span id="cb15-364"><a href="#cb15-364" aria-hidden="true" tabindex="-1"></a>        max_tid <span class="op">=</span> max<span class="op">(</span>max_tid<span class="op">,</span> e<span class="op">.</span>thread<span class="op">())</span></span>
+<span id="cb15-365"><a href="#cb15-365" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-366"><a href="#cb15-366" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-367"><a href="#cb15-367" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="op">:=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;=</span> max_tid<span class="op">;</span> i<span class="op">++</span> <span class="op">{</span></span>
+<span id="cb15-368"><a href="#cb15-368" aria-hidden="true" tabindex="-1"></a>        s<span class="op">.</span>th_lockset<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> <span class="bu">make</span><span class="op">(</span><span class="kw">map</span><span class="op">[</span><span class="dt">int</span><span class="op">]</span><span class="dt">bool</span><span class="op">)</span></span>
+<span id="cb15-369"><a href="#cb15-369" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-370"><a href="#cb15-370" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-371"><a href="#cb15-371" aria-hidden="true" tabindex="-1"></a>    exec <span class="op">:=</span> <span class="kw">func</span><span class="op">(</span>e Event<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-372"><a href="#cb15-372" aria-hidden="true" tabindex="-1"></a>        <span class="cf">switch</span> <span class="op">{</span></span>
+<span id="cb15-373"><a href="#cb15-373" aria-hidden="true" tabindex="-1"></a>        <span class="cf">case</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> AcquireEvt<span class="op">:</span></span>
+<span id="cb15-374"><a href="#cb15-374" aria-hidden="true" tabindex="-1"></a>            s<span class="op">.</span>acquire<span class="op">(</span>e<span class="op">)</span></span>
+<span id="cb15-375"><a href="#cb15-375" aria-hidden="true" tabindex="-1"></a>        <span class="cf">case</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> ReleaseEvt<span class="op">:</span></span>
+<span id="cb15-376"><a href="#cb15-376" aria-hidden="true" tabindex="-1"></a>            s<span class="op">.</span>release<span class="op">(</span>e<span class="op">)</span></span>
+<span id="cb15-377"><a href="#cb15-377" aria-hidden="true" tabindex="-1"></a>        <span class="cf">case</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> ForkEvt<span class="op">:</span></span>
+<span id="cb15-378"><a href="#cb15-378" aria-hidden="true" tabindex="-1"></a>            s<span class="op">.</span>fork<span class="op">(</span>e<span class="op">)</span></span>
+<span id="cb15-379"><a href="#cb15-379" aria-hidden="true" tabindex="-1"></a>        <span class="cf">case</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> JoinEvt<span class="op">:</span></span>
+<span id="cb15-380"><a href="#cb15-380" aria-hidden="true" tabindex="-1"></a>            s<span class="op">.</span>join<span class="op">(</span>e<span class="op">)</span></span>
+<span id="cb15-381"><a href="#cb15-381" aria-hidden="true" tabindex="-1"></a>        <span class="cf">case</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> WriteEvt<span class="op">:</span></span>
+<span id="cb15-382"><a href="#cb15-382" aria-hidden="true" tabindex="-1"></a>            s<span class="op">.</span>write<span class="op">(</span>e<span class="op">)</span></span>
+<span id="cb15-383"><a href="#cb15-383" aria-hidden="true" tabindex="-1"></a>        <span class="cf">case</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> ReadEvt<span class="op">:</span></span>
+<span id="cb15-384"><a href="#cb15-384" aria-hidden="true" tabindex="-1"></a>            s<span class="op">.</span>read<span class="op">(</span>e<span class="op">)</span></span>
+<span id="cb15-385"><a href="#cb15-385" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb15-386"><a href="#cb15-386" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-387"><a href="#cb15-387" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-388"><a href="#cb15-388" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-389"><a href="#cb15-389" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i<span class="op">,</span> e <span class="op">:=</span> <span class="kw">range</span> es <span class="op">{</span></span>
+<span id="cb15-390"><a href="#cb15-390" aria-hidden="true" tabindex="-1"></a>        exec<span class="op">(</span>e<span class="op">)</span></span>
+<span id="cb15-391"><a href="#cb15-391" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> WriteEvt <span class="op">{</span></span>
+<span id="cb15-392"><a href="#cb15-392" aria-hidden="true" tabindex="-1"></a>            s<span class="op">.</span>evt_lockset<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> copyLS<span class="op">(</span>s<span class="op">.</span>th_lockset<span class="op">[</span>e<span class="op">.</span>thread<span class="op">()])</span></span>
+<span id="cb15-393"><a href="#cb15-393" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb15-394"><a href="#cb15-394" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> e<span class="op">.</span>kind<span class="op">()</span> <span class="op">==</span> ReadEvt <span class="op">{</span></span>
+<span id="cb15-395"><a href="#cb15-395" aria-hidden="true" tabindex="-1"></a>            s<span class="op">.</span>evt_lockset<span class="op">[</span>i<span class="op">]</span> <span class="op">=</span> copyLS<span class="op">(</span>s<span class="op">.</span>th_lockset<span class="op">[</span>e<span class="op">.</span>thread<span class="op">()])</span></span>
+<span id="cb15-396"><a href="#cb15-396" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb15-397"><a href="#cb15-397" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-398"><a href="#cb15-398" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-399"><a href="#cb15-399" aria-hidden="true" tabindex="-1"></a>    fmt<span class="op">.</span>Printf<span class="op">(</span><span class="st">&quot;</span><span class="ch">\n</span><span class="st">%s</span><span class="ch">\n</span><span class="st">&quot;</span><span class="op">,</span> displayTraceWithLS<span class="op">(</span>max_tid<span class="op">,</span> es<span class="op">,</span> s<span class="op">.</span>evt_lockset<span class="op">,</span> <span class="dv">12</span><span class="op">))</span></span>
+<span id="cb15-400"><a href="#cb15-400" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-401"><a href="#cb15-401" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-402"><a href="#cb15-402" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-403"><a href="#cb15-403" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>s <span class="op">*</span>State<span class="op">)</span> acquire<span class="op">(</span>e Event<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-404"><a href="#cb15-404" aria-hidden="true" tabindex="-1"></a>    t <span class="op">:=</span> e<span class="op">.</span>thread<span class="op">()</span></span>
+<span id="cb15-405"><a href="#cb15-405" aria-hidden="true" tabindex="-1"></a>    y <span class="op">:=</span> e<span class="op">.</span>arg<span class="op">()</span></span>
+<span id="cb15-406"><a href="#cb15-406" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-407"><a href="#cb15-407" aria-hidden="true" tabindex="-1"></a>    s<span class="op">.</span>th_lockset<span class="op">[</span>t<span class="op">].</span>add<span class="op">(</span>y<span class="op">)</span></span>
+<span id="cb15-408"><a href="#cb15-408" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-409"><a href="#cb15-409" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-410"><a href="#cb15-410" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-411"><a href="#cb15-411" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>s <span class="op">*</span>State<span class="op">)</span> release<span class="op">(</span>e Event<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-412"><a href="#cb15-412" aria-hidden="true" tabindex="-1"></a>    t <span class="op">:=</span> e<span class="op">.</span>thread<span class="op">()</span></span>
+<span id="cb15-413"><a href="#cb15-413" aria-hidden="true" tabindex="-1"></a>    y <span class="op">:=</span> e<span class="op">.</span>arg<span class="op">()</span></span>
+<span id="cb15-414"><a href="#cb15-414" aria-hidden="true" tabindex="-1"></a>    s<span class="op">.</span>th_lockset<span class="op">[</span>t<span class="op">].</span>remove<span class="op">(</span>y<span class="op">)</span></span>
+<span id="cb15-415"><a href="#cb15-415" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-416"><a href="#cb15-416" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-417"><a href="#cb15-417" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>s <span class="op">*</span>State<span class="op">)</span> fork<span class="op">(</span>e Event<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-418"><a href="#cb15-418" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-419"><a href="#cb15-419" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-420"><a href="#cb15-420" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-421"><a href="#cb15-421" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>s <span class="op">*</span>State<span class="op">)</span> join<span class="op">(</span>e Event<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-422"><a href="#cb15-422" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-423"><a href="#cb15-423" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-424"><a href="#cb15-424" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-425"><a href="#cb15-425" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>s <span class="op">*</span>State<span class="op">)</span> write<span class="op">(</span>e Event<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-426"><a href="#cb15-426" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-427"><a href="#cb15-427" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-428"><a href="#cb15-428" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-429"><a href="#cb15-429" aria-hidden="true" tabindex="-1"></a><span class="kw">func</span> <span class="op">(</span>s <span class="op">*</span>State<span class="op">)</span> read<span class="op">(</span>e Event<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-430"><a href="#cb15-430" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-431"><a href="#cb15-431" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 </div>
 </body>
 </html>
