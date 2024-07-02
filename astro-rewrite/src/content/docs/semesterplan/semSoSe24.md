@@ -81,23 +81,27 @@ Wöchentlicher Ablauf.
 -   W8, 06.05-12.05 (Donnerstag Vorlesungsfrei)
     -   Keine Vorlesung
 -   W9, 13.05-19.05
-    -   Dynamische Data Race Erkennung
-        -   Lockset Methode
-    -   go-race
+    -   Keine Vorlesung
 -   Pfingstwoche Vorlesungsfrei, 20.05-26.05
 -   W10, 27.05-02.06 (Donnerstag Vorlesungsfrei)
     -   Keine Vorlesung
 -   W11, 03.06-09.06
-    -   Deadlock Analyse
+    -   Dynamische Data Race Erkennung (Wiederholung)
 -   W12, 10.06-16.06
+    -   Dynamische Data Race Erkennung
+        -   Vector clocks
+        -   FastTrack Algorithmus
+    -   go-race
+-   W13, 17.06-23.06
+    -   Dynamische Data Race Erkennung
+        -   Lockset Methode
+    -   Deadlock Analyse
+-   W14, 24.06-30.06
     -   General purpose versus domain specific languages
     -   Concurrency models (mutex, fork/join, barrier, wait/notify,
         futures)
--   W13, 17.06-23.06
-    -   Concurrency models (more on futures)
--   W14, 24.06-30.06
-    -   TBA
 -   W15, 01.07-07.07
+    -   Concurrency models (more on futures)
     -   Klausurinfo:
         -   Schriftlich, ohne Hilfsmittel
         -   Teil der Modulklausur Autonome Systeme + Rechner Architektur

@@ -218,6 +218,9 @@ where *i*! = *j* and *n* &gt; 0. Then, we find that
     Hence, the critical section order only needs to consider a release
     and a later in trace appearing acquire.
 
+*The HB relation does not enforce the last writer rule. More on this
+later.*
+
 ## Example
 
 Consider the trace
@@ -634,7 +637,7 @@ We define &lt; and *s**y**n**c* for vector clocks as follows.
 
     Order among vector clocks
 
-          [i1,...,in]  < [j1,...,jn])
+          [i1,...,in]  < [j1,...,jn]
 
     if ik<=jk for all k=1...n and there exists k such that ik<jk.
 
@@ -704,10 +707,9 @@ Event processing.
       then write in a race with a read
 
       If W(x) exists
-      then let j##k = W(x)
+      then let j##k = W(x)                    -- means W(x) equals j##k
            if k > Th(t)(j)
            then write in a race with a write
-      then write-write race (W(x),e)
 
       W(x) = t##Th(t)(t)
       inc(Th(t),t)
@@ -719,81 +721,815 @@ Event processing.
            if k > Th(t)(j)
            then read in a race with a write
       R(x) = sync(Th(t), R(x))
+      inc(Th(t),t)
     }
 
-We follow Java’s memory semantics.
-
-We impose last-write order only for atomic variables.
-
-Atomic variables are protected by a lock. As we order critical sections
-based on their textual occurrence, we get the last-write order for
-atomic variables for free.
+Points note note.
 
 We include `fork` and `join` events.
 
-## Examples (from before)
+FastTrack (like the HB relation) does not enforce the “last writer”
+rule. This is in line with We Java’s “weak” memory semantics.
 
-### Race not detected
+The last-write order is enforced for atomic variables. Atomic variables
+are protected by a lock. As we order critical sections based on their
+textual occurrence, we get the last-write order for atomic variables for
+free.
 
-        T0            T1
+## FastTrack Examples (from before)
 
-    1.  fork(T1)                    [1,0]
-    2.  acq(x)                      [2,0]
-    3.  wr(z)                       [3,0]  W(z) = undefined
-    4.  rel(x)                      [4,0]
-    5.                acq(x)        [1,1]
-    6.                rel(x)        [4,2]
-    7.                wr(z)         [4,3]  W(z) = 0##3
+The following examples are automatically generated. There is a slight
+change in naming convention. Instead of lock variable “x” we write “L1”.
+Similarly, we write “V0” for some shared variable “y”.
 
--   For each event we annotate its vector clock
+## Race not detected
 
--   For each write we show the state of W(x) before processing the read
+Consider the following trace.
 
--   If there are any reads we also show R(x)
+       T0            T1
+    e1. fork(T1)
+    e2. acq(L1)
+    e3. wr(V2)
+    e4. rel(L1)
+    e5.               acq(L1)
+    e6.               rel(L1)
+    e7.               wr(V2)
 
-### Race detected
+We apply the FastTrack algorithm on the above trace. For each event we
+annotate its vector clock before and after processing the event.
 
-        T0            T1
+       T0                            T1
+    e1. [1,0]_fork(T1)_[2,0]
+    e2. [2,0]_acq(L1)_[3,0]
+    e3. [3,0]_wr(V2)_[4,0]
+    e4. [4,0]_rel(L1)_[5,0]
+    e5.                               [1,1]_acq(L1)_[4,2]
+    e6.                               [4,2]_rel(L1)_[4,3]
+    e7.                               [4,3]_wr(V2)_[4,4]
 
-    1.  fork(T1)                    [1,0]
-    2.  acq(x)                      [2,0]
-    3.  wr(z)                       [3,0]  W(z) = undefined
-    4.  rel(x)                      [4,0]
-    5.                wr(z)         [1,1]  W(z) = 0##3
-    6.                acq(x)        [1,2]
-    7.                rel(x)        [4,3]
+Here are the individual processing steps in detail.
+
+    ****
+    Step 1: Processing event fork(T1)in thread T0
+    BEFORE
+    Thread VC = [1,0]
+    AFTER
+    Thread VC = [2,0]
+    ****
+    Step 2: Processing event acq(L1)in thread T0
+    BEFORE
+    Thread VC = [2,0]
+    Rel[L1] = [0,0]
+    AFTER
+    Thread VC = [3,0]
+    Rel[L1] = [0,0]
+    ****
+    Step 3: Processing event wr(V2)in thread T0
+    BEFORE
+    Thread VC = [3,0]
+    R[V2] = [0,0]
+    W[V2] = undefined
+    AFTER
+    Thread VC = [4,0]
+    R[V2] = [0,0]
+    W[V2] = 0##3
+    ****
+    Step 4: Processing event rel(L1)in thread T0
+    BEFORE
+    Thread VC = [4,0]
+    Rel[L1] = [0,0]
+    AFTER
+    Thread VC = [5,0]
+    Rel[L1] = [4,0]
+    ****
+    Step 5: Processing event acq(L1)in thread T1
+    BEFORE
+    Thread VC = [1,1]
+    Rel[L1] = [4,0]
+    AFTER
+    Thread VC = [4,2]
+    Rel[L1] = [4,0]
+    ****
+    Step 6: Processing event rel(L1)in thread T1
+    BEFORE
+    Thread VC = [4,2]
+    Rel[L1] = [4,0]
+    AFTER
+    Thread VC = [4,3]
+    Rel[L1] = [4,2]
+    ****
+    Step 7: Processing event wr(V2)in thread T1
+    BEFORE
+    Thread VC = [4,3]
+    R[V2] = [0,0]
+    W[V2] = 0##3
+    AFTER
+    Thread VC = [4,4]
+    R[V2] = [0,0]
+    W[V2] = 1##3
+
+## Race detected
+
+       T0            T1
+    e1. fork(T1)
+    e2. acq(L1)
+    e3. wr(V2)
+    e4. rel(L1)
+    e5.               wr(V2)
+    e6.               acq(L1)
+    e7.               rel(L1)
+
+In case of a race detected, we annotate the triggering event.
+
+       T0                            T1
+    e1. [1,0]_fork(T1)_[2,0]
+    e2. [2,0]_acq(L1)_[3,0]
+    e3. [3,0]_wr(V2)_[4,0]
+    e4. [4,0]_rel(L1)_[5,0]
+    e5.                               [1,1]_wr(V2)_[1,2]   WW
+    e6.                               [1,2]_acq(L1)_[4,3]
+    e7.                               [4,3]_rel(L1)_[4,4]
+
+The annotation `WW` indicates that write event `e4` is in a race with
+some earlier write.
+
+For brevity, we omit the detailed processing steps.
 
 ### Earlier race not detected
 
-        T0            T1
+       T0            T1
+    e1. fork(T1)
+    e2. acq(L1)
+    e3. wr(V2)
+    e4. wr(V2)
+    e5. rel(L1)
+    e6.               wr(V2)
+    e7.               acq(L1)
+    e8.               rel(L1)
 
-    1.  fork(T1)                    [1,0]
-    2.  acq(y)                      [2,0]
-    3.  wr(x)                       [3,0]  W(x) = undefined
-    4.  wr(x)                       [4,0]  W(x) = 0##3
-    5.  rel(y)                      [5,0]
-    6.                wr(x)         [1,1]  W(x) = 0##4
-    7.                acq(y)        [1,2]
-    8.                rel(y)        [5,3]
+Event `e6` is in a race with `e4` and `e3`. However, FastTrack only
+maintains the “last” write. Hence, FastTrack only reports the race among
+`e6` and `e4`.
+
+Here is the annotated trace.
+
+       T0                            T1
+    e1. [1,0]_fork(T1)_[2,0]
+    e2. [2,0]_acq(L1)_[3,0]
+    e3. [4,0]_wr(V2)_[5,0]
+    e4. [4,0]_wr(V2)_[5,0]
+    e5. [5,0]_rel(L1)_[6,0]
+    e6.                               [1,1]_wr(V2)_[1,2]   WW
+    e7.                               [1,2]_acq(L1)_[5,3]
+    e8.                               [5,3]_rel(L1)_[5,4]
 
 ### Read-write races
 
-        T0            T1            T2
+The following trace contains reads as well as writes.
 
-    1.  wr(x)                                     [1,0,0]  W(x) = undefined
-    2.  fork(T1)                                  [2,0,0]
-    3.  fork(T2)                                  [3,0,0]
-    4.  rd(x)                                     [4,0,0]
-    5.                rd(x)                       [2,1,0]
-    6.                              acq(y)        [3,0,1]
-    7.                              wr(x)         [3,0,2]  W(x) = 0##1  R(x) = [0##4,1##1]
-    8.                              rel(y)        [3,0,3]
+       T0            T1            T2
+    e1. wr(V2)
+    e2. fork(T1)
+    e3. fork(T2)
+    e4. rd(V2)
+    e5.               rd(V2)
+    e6.                             acq(L1)
+    e7.                             wr(V2)
+    e8.                             rel(L1)
+
+FastTrack reports that the write `e7` is in a race with a read. See the
+annotation `RW` below.
+
+       T0                            T1                            T2
+    e1. [1,0,0]_wr(V2)_[2,0,0]
+    e2. [2,0,0]_fork(T1)_[3,0,0]
+    e3. [3,0,0]_fork(T2)_[4,0,0]
+    e4. [4,0,0]_rd(V2)_[5,0,0]
+    e5.                               [2,1,0]_rd(V2)_[2,2,0]
+    e6.                                                             [3,0,1]_acq(L1)_[3,0,2]
+    e7.                                                             [3,0,2]_wr(V2)_[3,0,3]   RW
+    e8.                                                             [3,0,3]_rel(L1)_[3,0,4]
+
+There are two read-write races: (`e4`,`e7`) and (`e5`,`e7`). In our
+FastTrack implementation, we only report the triggering event.
+
+Here is a variant of the above example where we find write-write and
+write-read and read-write races.
+
+       T0            T1            T2
+    e1. fork(T1)
+    e2. fork(T2)
+    e3. wr(V2)
+    e4. rd(V2)
+    e5.               rd(V2)
+    e6.                             acq(L1)
+    e7.                             wr(V2)
+    e8.                             rel(L1)
+
+Here is the annotated trace.
+
+       T0                            T1                            T2
+    e1. [1,0,0]_fork(T1)_[2,0,0]
+    e2. [2,0,0]_fork(T2)_[3,0,0]
+    e3. [3,0,0]_wr(V2)_[4,0,0]
+    e4. [4,0,0]_rd(V2)_[5,0,0]
+    e5.                               [1,1,0]_rd(V2)_[1,2,0]  WR
+    e6.                                                             [2,0,1]_acq(L1)_[2,0,2]
+    e7.                                                             [2,0,2]_wr(V2)_[2,0,3]   RW WW
+    e8.                                                             [2,0,3]_rel(L1)_[2,0,4]
+
+## FastTrack Implementation in Go
+
+[Go playground](https://go.dev/play/p/FJb7BDk6Tyl)
+
+Check out main and the examples.
+
+    package main
+
+    // FastTrack
+
+    import "fmt"
+    import "strconv"
+    import "strings"
+
+
+
+    // Example traces.
+
+    // Traces are assumed to be well-formed.
+    // For example, if we fork(ti) we assume that thread ti exists.
+
+    // Race not detected
+    func trace_1() []Event {
+        t0 := mainThread()
+        t1 := nextThread(t0)
+        x := 1
+        z := 2
+        return []Event{
+            fork(t0, t1),
+            acq(t0, x),
+            wr(t0, z),
+            rel(t0, x),
+            acq(t1, x),
+            rel(t1, x),
+            wr(t1, z)}
+    }
+
+    // Race detected
+    func trace_2() []Event {
+        t0 := mainThread()
+        t1 := nextThread(t0)
+        x := 1
+        z := 2
+        return []Event{
+            fork(t0, t1),
+            acq(t0, x),
+            wr(t0, z),
+            rel(t0, x),
+            wr(t1, z),
+            acq(t1, x),
+            rel(t1, x)}
+
+    }
+
+    // Earlier race not detected
+    func trace_2b() []Event {
+        t0 := mainThread()
+        t1 := nextThread(t0)
+        x := 1
+        z := 2
+        return []Event{
+            fork(t0, t1),
+            acq(t0, x),
+            wr(t0, z),
+            wr(t0, z),
+            rel(t0, x),
+            wr(t1, z),
+            acq(t1, x),
+            rel(t1, x)}
+
+    }
+
+    // Read-write races
+    func trace_3() []Event {
+        t0 := mainThread()
+        t1 := nextThread(t0)
+        t2 := nextThread(t1)
+        x := 1
+        z := 2
+        return []Event{
+            wr(t0, z),
+            fork(t0, t1),
+            fork(t0, t2),
+            rd(t0, z),
+            rd(t1, z),
+            acq(t2, x),
+            wr(t2, z),
+            rel(t2, x)}
+
+    }
+
+    // Write-write and wwrite-read and read-write races
+    func trace_3b() []Event {
+        t0 := mainThread()
+        t1 := nextThread(t0)
+        t2 := nextThread(t1)
+        x := 1
+        z := 2
+        return []Event{
+            fork(t0, t1),
+            fork(t0, t2),
+            wr(t0, z),
+            rd(t0, z),
+            rd(t1, z),
+            acq(t2, x),
+            wr(t2, z),
+            rel(t2, x)}
+
+    }
+
+    func main() {
+
+        //  fmt.Printf("\n%s\n", displayTrace(trace_1()))
+        //  run(trace_1(), true)
+
+        //  fmt.Printf("\n%s\n", displayTrace(trace_2()))
+        //  run(trace_2(), true)
+
+        //  fmt.Printf("\n%s\n", displayTrace(trace_2b()))
+        //  run(trace_2b(), true)
+
+        //  fmt.Printf("\n%s\n", displayTrace(trace_3()))
+        //  run(trace_3(), true)
+
+        //      fmt.Printf("\n%s\n", displayTrace(trace_3b()))
+        //      run(trace_3b(), true)
+
+    }
+
+
+
+
+    ///////////////////////////////////////////////////////////////
+    // Helpers
+
+    func max(x, y int) int {
+        if x < y {
+            return y
+        }
+        return x
+    }
+
+    func debug(s string) {
+        fmt.Printf("%s", s)
+
+    }
+
+    ///////////////////////////////////////////////////////////////
+    // Events
+
+    type EvtKind int
+
+    const (
+        AcquireEvt EvtKind = 0
+        ReleaseEvt EvtKind = 1
+        WriteEvt   EvtKind = 2
+        ReadEvt    EvtKind = 3
+        ForkEvt    EvtKind = 4
+        JoinEvt    EvtKind = 5
+    )
+
+    type Event struct {
+        k_  EvtKind
+        id_ int
+        a_  int
+    }
+
+    func (e Event) thread() int   { return e.id_ }
+    func (e Event) kind() EvtKind { return e.k_ }
+    func (e Event) arg() int      { return e.a_ }
+
+    // Some convenience functions.
+    func rd(i int, a int) Event {
+        return Event{ReadEvt, i, a}
+    }
+
+    func wr(i int, a int) Event {
+        return Event{WriteEvt, i, a}
+    }
+
+    func acq(i int, a int) Event {
+        return Event{AcquireEvt, i, a}
+    }
+
+    func rel(i int, a int) Event {
+        return Event{ReleaseEvt, i, a}
+    }
+
+    func fork(i int, a int) Event {
+        return Event{ForkEvt, i, a}
+    }
+
+    func join(i int, a int) Event {
+        return Event{JoinEvt, i, a}
+    }
+
+    // Trace assumptions.
+    // Initial thread starts with 0. Threads have ids in ascending order.
+
+    func trace_info(es []Event) (int, map[int]bool, map[int]bool) {
+        max_tid := 0
+        vars := map[int]bool{}
+        locks := map[int]bool{}
+        for _, e := range es {
+            max_tid = max(max_tid, e.thread())
+            if e.kind() == WriteEvt || e.kind() == ReadEvt {
+                vars[e.arg()] = true
+            }
+            if e.kind() == AcquireEvt { // For each rel(x) there must exists some acq(x)
+                locks[e.arg()] = true
+            }
+        }
+        return max_tid, vars, locks
+    }
+
+    func mainThread() int      { return 0 }
+    func nextThread(i int) int { return i + 1 }
+
+    const (
+        ROW_OFFSET = 14
+    )
+
+    // Omit thread + loc info.
+    func displayEvtSimple(e Event, i int) string {
+        var s string
+        arg := strconv.Itoa(e.arg())
+        switch {
+        case e.kind() == AcquireEvt:
+            s = "acq(L" + arg + ")" // L(ock)
+        case e.kind() == ReleaseEvt:
+            s = "rel(L" + arg + ")"
+        case e.kind() == WriteEvt:
+            s = "wr(V" + arg + ")" // V(ar)
+        case e.kind() == ReadEvt:
+            s = "rd(V" + arg + ")"
+        case e.kind() == ForkEvt:
+            s = "fork(T" + arg + ")" // T(hread)
+        case e.kind() == JoinEvt:
+            s = "join(T" + arg + ")"
+        }
+        return s
+    }
+
+    func colOffset(i int, row_offset int) string {
+        n := (int)(i)
+        return strings.Repeat(" ", n*row_offset)
+    }
+
+    // Thread ids fully cover [0..n]
+    func displayTraceHelper(es []Event, row_offset int, displayEvt func(e Event, i int) string) string {
+        s := ""
+        m := 0
+        for i, e := range es {
+            row := "\n" + "e" + strconv.Itoa(i+1) + ". " + colOffset(e.thread(), row_offset) + displayEvt(e, i)
+            s = s + row
+            m = max(m, e.thread())
+        }
+        // Add column headings.
+        heading := "   "
+        for i := 0; i <= m; i++ {
+            heading += "T" + strconv.Itoa(i) + strings.Repeat(" ", row_offset-2)
+        }
+        s = heading + s
+
+        return s
+    }
+
+    func displayTrace(es []Event) string {
+        return displayTraceHelper(es, ROW_OFFSET, displayEvtSimple)
+    }
+
+    func displayTraceWithVC(es []Event, pre map[Event]VC, post map[Event]VC, races map[Event]string) string {
+        displayEvt := func(e Event, i int) string {
+            out := pre[e].display() + "_" + displayEvtSimple(e, i) + "_" + post[e].display()
+            info, exists := races[e]
+            if exists {
+                out = out + "  " + info
+
+            }
+            return out
+
+        }
+        return displayTraceHelper(es, 30, displayEvt)
+    }
+
+    ///////////////////////////////////////////////////////////////
+    // Vector Clocks
+
+    type VC []int
+
+    type Epoch struct {
+        tid        int
+        time_stamp int
+    }
+
+    func (e Epoch) display() string {
+        return strconv.Itoa(e.tid) + "##" + strconv.Itoa(e.time_stamp)
+
+    }
+
+    func (v VC) display() string {
+        var s string
+        s = "["
+        for index := 0; index < len(v)-1; index++ {
+            s = s + strconv.Itoa(v[index]) + ","
+
+        }
+        if len(v) > 0 {
+            s = s + strconv.Itoa(v[len(v)-1]) + "]"
+        }
+        return s
+
+    }
+
+    func copyVC(v VC) VC {
+        new := make(VC, len(v))
+        copy(new, v)
+        return new
+    }
+
+    func sync(v VC, v2 VC) VC {
+        l := max(len(v), len(v2))
+
+        v3 := make([]int, l)
+
+        for tid, _ := range v3 {
+
+            v3[tid] = max(v[tid], v2[tid])
+        }
+
+        return v3
+    }
+
+    func (v VC) happensBefore(v2 VC) bool {
+        b := false
+        for tid := 0; tid < max(len(v), len(v2)); tid++ {
+            if v[tid] > v2[tid] {
+                return false
+            } else if v[tid] < v2[tid] {
+                b = true
+            }
+
+        }
+        return b
+    }
+
+    func (e Epoch) happensBefore(v VC) bool {
+        return e.time_stamp <= v[e.tid]
+
+    }
+
+    ///////////////////////////////////////////////////////////////
+    // Vector Clocks
+
+    type FT struct {
+        Th    map[int]VC
+        pre   map[Event]VC
+        post  map[Event]VC
+        Rel   map[int]VC
+        W     map[int]Epoch
+        R     map[int]VC
+        races map[Event]string
+        i     int
+    }
+
+    func run(es []Event, full_info bool) {
+
+        var ft FT
+
+        ft.Th = make(map[int]VC)
+        ft.pre = make(map[Event]VC)
+        ft.post = make(map[Event]VC)
+        ft.Rel = make(map[int]VC)
+        ft.W = make(map[int]Epoch)
+        ft.R = make(map[int]VC)
+        ft.races = make(map[Event]string)
+
+        n, vars, locks := trace_info(es)
+        n = n + 1
+
+        // Initial vector clock of T0
+        ft.Th[0] = make([]int, n)
+        for j := 0; j < n; j++ {
+            ft.Th[0][j] = 0
+        }
+        ft.Th[0][0] = 1
+
+        for x, _ := range vars {
+            ft.R[x] = make([]int, n) // all entries are zero
+        }
+
+        for y, _ := range locks {
+            ft.Rel[y] = make([]int, n) // all entries are zero
+        }
+
+        exec := func(e Event) {
+            switch {
+            case e.kind() == AcquireEvt:
+                ft.acquire(e)
+            case e.kind() == ReleaseEvt:
+                ft.release(e)
+            case e.kind() == ForkEvt:
+                ft.fork(e)
+            case e.kind() == JoinEvt:
+                ft.join(e)
+            case e.kind() == WriteEvt:
+                ft.write(e)
+            case e.kind() == ReadEvt:
+                ft.read(e)
+            }
+
+        }
+
+        infoBefore := func(i int, e Event) {
+
+            if full_info {
+
+                x := strconv.Itoa(e.arg())
+
+                    out := "\n****\nStep " + strconv.Itoa(i) + ": Processing event " + displayEvtSimple(e, i) + "in thread T" + strconv.Itoa(e.thread())
+                out = out + "\nBEFORE"
+                out = out + "\nThread VC = " + ft.Th[e.thread()].display()
+
+                if e.kind() == AcquireEvt || e.kind() == ReleaseEvt {
+                    out = out + "\nRel[L" + x + "] = " + ft.Rel[e.arg()].display()
+
+                }
+
+                if e.kind() == WriteEvt || e.kind() == ReadEvt {
+                    out = out + "\nR[V" + x + "] = " + ft.R[e.arg()].display()
+
+                    ep, exists := ft.W[e.arg()]
+                    if exists {
+                        out = out + "\nW[V" + x + "] = " + ep.display()
+                    } else {
+                        out = out + "\nW[V" + x + "] = undefined"
+                    }
+
+                }
+
+                fmt.Printf("%s", out)
+            }
+
+        }
+
+        infoAfter := func(e Event) {
+
+            if full_info {
+
+                x := strconv.Itoa(e.arg())
+
+                out := "\nAFTER"
+                out = out + "\nThread VC = " + ft.Th[e.thread()].display()
+
+                if e.kind() == AcquireEvt || e.kind() == ReleaseEvt {
+                    out = out + "\nRel[L" + x + "] = " + ft.Rel[e.arg()].display()
+
+                }
+
+                if e.kind() == WriteEvt || e.kind() == ReadEvt {
+                    out = out + "\nR[V" + x + "] = " + ft.R[e.arg()].display()
+
+                    ep, exists := ft.W[e.arg()]
+                    if exists {
+                        out = out + "\nW[V" + x + "] = " + ep.display()
+                    } else {
+                        out = out + "\nW[V" + x + "] = undefined"
+                    }
+
+                }
+
+                fmt.Printf("%s", out)
+            }
+
+        }
+
+        for i, e := range es {
+            infoBefore(i+1, e)
+            ft.pre[e] = copyVC(ft.Th[e.thread()])
+            exec(e)
+            infoAfter(e)
+            ft.post[e] = copyVC(ft.Th[e.thread()])
+        }
+
+        fmt.Printf("\n%s\n", displayTraceWithVC(es, ft.pre, ft.post, ft.races))
+
+    }
+
+    // We only report the event that triggered the race.
+    func (ft *FT) logWR(e Event) {
+        ft.races[e] = "WR" // "write-read race"
+    }
+
+    // A write might be in a race with a write and a read, so must add any race message.
+    func (ft *FT) logRW(e Event) {
+        _, exists := ft.races[e]
+        if !exists {
+            ft.races[e] = ""
+        }
+        ft.races[e] = ft.races[e] + " " + "RW" // "read-write race"
+
+    }
+
+    func (ft *FT) logWW(e Event) {
+        _, exists := ft.races[e]
+        if !exists {
+            ft.races[e] = ""
+        }
+        ft.races[e] = ft.races[e] + " " + "WW" // "write-write race"
+    }
+
+    func (ft *FT) inc(t int) {
+        ft.Th[t][t] = ft.Th[t][t] + 1
+
+    }
+
+    func (ft *FT) acquire(e Event) {
+        t := e.thread()
+        y := e.arg()
+        vc, ok := ft.Rel[y]
+        if ok {
+            ft.Th[t] = sync(ft.Th[t], vc)
+        }
+        ft.inc(t)
+
+    }
+
+    func (ft *FT) release(e Event) {
+        t := e.thread()
+        y := e.arg()
+        ft.Rel[y] = copyVC(ft.Th[t])
+        ft.inc(t)
+    }
+
+    func (ft *FT) fork(e Event) {
+        t1 := e.thread()
+        t2 := e.arg()
+        ft.Th[t2] = copyVC(ft.Th[t1])
+        ft.inc(t1)
+        ft.inc(t2)
+    }
+
+    func (ft *FT) join(e Event) {
+        t1 := e.thread()
+        t2 := e.arg()
+        ft.Th[t1] = sync(ft.Th[t1], ft.Th[t2])
+        ft.inc(t1)
+
+    }
+
+    func (ft *FT) write(e Event) {
+        t := e.thread()
+        x := e.arg()
+
+        if !ft.R[x].happensBefore(ft.Th[t]) {
+            ft.logRW(e)
+        }
+
+        ep, exists := ft.W[x]
+        if exists {
+            if !ep.happensBefore(ft.Th[t]) {
+                ft.logWW(e)
+            }
+
+        }
+
+        ft.W[x] = Epoch{tid: t, time_stamp: ft.Th[t][t]}
+        ft.inc(t)
+
+    }
+
+    func (ft *FT) read(e Event) {
+        t := e.thread()
+        x := e.arg()
+        ep, exists := ft.W[x]
+        if exists {
+            if !ep.happensBefore(ft.Th[t]) {
+                ft.logWR(e)
+            }
+
+            ft.R[x] = sync(ft.Th[t], ft.R[x])
+
+        }
+        ft.inc(t)
+
+    }
 
 ## Summary
 
 ## False negatives
 
-The HB method as *false negatives*. This is due to the fact that the
+The HB method has *false negatives*. This is due to the fact that the
 textual order among critical sections is preserved.
 
 Consider the following trace.
@@ -917,8 +1653,7 @@ positions.
     2.   w(y)
 
 In the reordered trace II, the two writes on x appear right next to each
-other. Is there a program run and that yields the above reordered trace?
-No!
+other. Is there a program run that yields the above reordered trace? No!
 
 In the reordered trace II, we violate the write-read dependency between
 *w*(*y*)<sub>2</sub> and *r*(*y*)<sub>3</sub>. *w*(*y*)<sub>2</sub> is
@@ -958,6 +1693,33 @@ There is also a write-read dependency, see locations marked WRITE and
 READ. However, the read value does not influence the control flow.
 Hence, for the above program trace II would be a valid reordering of
 trace I.
+
+### Weak memory models
+
+There are further reasons why we can argue that there is no false
+positive. Consider the original trace.
+
+    Trace I:
+
+         T1            T2
+
+    1.   w(x)
+    2.   w(y)
+    3.                 r(y)
+    4.                 w(x)
+
+The HB relation applies the program order condition. If we consider a
+specific thread, then events are executed one after the other.
+
+On today’s modern computer architecture such rules no longer apply. We
+may execute events “out of order” if they do not interfere.
+
+For example, we can argume that the read event `r(y)` and the write
+event `w(x)` in thread T2 do not interfere with each other (as they
+operate on distinct variables). Hence, we may process `w(x)` before
+`r(y)`! There are also compiler optimizations where we speculatively
+execute `w(x)` before `r(y)`. Hence, we can argue that the data race
+among the writes on x is not a false positive.
 
 ## Further reading
 

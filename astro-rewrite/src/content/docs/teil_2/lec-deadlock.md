@@ -243,75 +243,116 @@ are not in S2.
 
 ## Cycle check
 
-We write *D* = (*i**d*, *l*, *l**s*) to refer to some lock dependency in
-thread *i**d* where lock *l* is acquired while holding locks *l**s*.
+We write `D = (id, l, ls)` to refer to some lock dependency in thread
+`id` where lock `l` is acquired while holding locks *l**s*.
 
 A deadlock (warning) is issued if there is a cyclic lock dependency
-chain *D*<sub>1</sub>, ..., *D*<sub>*n*</sub>:
+chain `D_1, ..., D_n` where each `D_i` results from a distinct thread
+and the following conditions are met:
 
--   (LD-1) *l**s*<sub>*i*</sub> ∩ *l**s*<sub>*j*</sub> = ⌀ for
-    *i*! = *j*, and
+-   (LD-1) `ls_i cap ls_j = {}` for `i != j`, and
 
--   (LD-2) *l*<sub>*i*</sub> ∈ *l**s*<sub>*i*</sub> + 1 for
-    *i* = 1, ..., *n* − 1, and
+-   (LD-2) `l_i \in ls_i+1` for `i=1,...,n-1`, and
 
--   (LD-3) *l*<sub>*n*</sub> ∈ *l**s*<sub>1</sub>.
+-   (LD-3) `l_n \in ls_1`.
 
-Note. Each *D*<sub>*i*</sub> results from some distinct thread *i*.
+Notation.
+
+`cap` stands for set intersection.
+`S1 cap S2 = { x | x in S1 and x in S2 }`.
+
+`D_i` results from thread `i`.
 
 ## Examples
 
+Traces are annotated with lock dependencies (generated via the “lock
+dependency” implementation in the appendix).
+
+### Standard example
+
+       T0          T1          LockDep
+    e1. fork(T1)
+    e2. acq(L1)
+    e3. acq(L2)                 (T0,L2,{L1})
+    e4. rel(L2)
+    e5. rel(L1)
+    e6.             acq(L2)
+    e7.             acq(L1)     (T1,L1,{L2})
+    e8.             rel(L1)
+    e9.             rel(L2)
+
+`(T0,L2,{L1}), (T1,L1,{L2})` are in a cyclic lock dependency chain.
+
+LD-1: {L1} cap {L2} = {}
+
+LD-2: L2 in {L2}
+
+LD-3: L1 in {L1}
+
+Indeed, there is a deadlock as shown by the following reordering.
+
+       T0          T1          LockDep
+    e1. fork(T1)
+    e2. acq(L1)
+    e6.             acq(L2)
+
+    We cannot extend the trace further because any of the next possible events that will follow are "blocked".
+    Recall that B-acq(L2) indicates that the acquire operation on L2 blocks.
+
+
+    e7.             B-acq(L1)
+    e3. B-acq(L2)
+
+By “blocked” we mean that by adding events e7 and e3 this will lead to
+an invalid trace (because lock semantics is violated here).
+
 ### Same thread
 
-Recall
+       T0          T1          LockDep
+    e1. fork(T1)
+    e2.             acq(L1)
+    e3.             rel(L1)
+    e4. acq(L1)
+    e5. acq(L2)                 (T0,L2,{L1})
+    e6. rel(L2)
+    e7. rel(L1)
+    e8. acq(L2)
+    e9. acq(L1)                 (T0,L1,{L2})
+    e10. rel(L1)
+    e11. rel(L2)
 
-        T1         T2     LS_T1     LS_T2
-
-     1.  acq(y)            {y}
-     2.  acq(x)            {y,x}                 yields (T1,x,{y})
-     3.  rel(x)            {y}
-     4.  rel(y)            {}
-     5.  acq(x)            {x}
-     6.  acq(y)            {x,y}                 yields (T1,y,{x})
-     7.  rel(y)            {x}
-     8.  rel(x)            {}
-
-In summary, we find the following lock dependencies.
-
-    (T1,x,{y})
-    (T1,y,{x})
-
-No deadlock warning is issued because dependencies are from the same
-thread T1.
+`(T0,L2,{L1})` and `(T0,L1,{L2})` are not in a cyclic lock dependency
+chain because they result from the same thread.
 
 ### Guard lock
 
-Recall
+      T0          T1          LockDep
+    e1. fork(T1)
+    e2. acq(L3)
+    e3. acq(L1)                 (T0,L1,{L3})
+    e4. acq(L2)                 (T0,L2,{L1,L3})
+    e5. rel(L2)
+    e6. rel(L1)
+    e7. rel(L3)
+    e8.             acq(L3)
+    e9.             acq(L2)     (T1,L2,{L3})
+    e10.             acq(L1)     (T1,L1,{L3,L2})
+    e11.             rel(L1)
+    e12.             rel(L2)
+    e13.             rel(L3)
 
-        T1            T2           T1_LS          T2_LS
+In summary, we find the following lock dependencies.
 
-     1.  acq(z)                      z
-     2.  acq(y)                      z,y                        (T1,y,{z})
-     3.  acq(x)                      z,y,x                      (T1,x,{y,z})
-     4.  rel(x)                      z,y
-     5.  rel(y)                      z
-     6.  rel(z)
-     7.             acq(z)                        z
-     8.             acq(x)                        z,x           (T2,x,{z})
-     9.             acq(y)                        z,x,y         (T2,y,{x,z})
-     10.            rel(y)                        z,x
-     11.            rel(x)                        z
-     12.            rel(z)
+    D1 = (T0,L1,{L3})
+    D2 = (T0,L2,{L1,L3})
 
-For the above, we compute the following lock dependencies.
+    D3 = (T1,L2,{L3})
+    D4 = (T1,L1,{L3,L2})
 
-    D1 = (T1, y, {z})
-    D2 = (T1, x, {y,z})
+No deadlock warning is issued.
 
-    D3 = (T2, x, {z})
-    D4 = (T2, y, {x,z})
-
-No deadlock warning is issued due to the common guard lock z.
+For example, D2 and D3 are not in a cyclic lock dependency chain due to
+the common guard lock `L3`.
 
 ## Precision (false positives and false negatives)
 
@@ -322,67 +363,93 @@ positives and false negatives.
 
 Consider the following example.
 
-        T1         T2
-
-    1.  acq(y)
-    2.  acq(x)
-    3.  rel(x)
-    4.  rel(y)
-    5.  acq(z)
-    6.  wr(a)
-    7.  rel(z)
-    8.             acq(z)
-    9.             rd(a)
-    10.            rel(z)
-    11.            acq(x)
-    12.            acq(y)
-    13.            rel(y)
-    14.            rel(x)
+       T0          T1          LockDep
+    e1. fork(T1)
+    e2. acq(L1)
+    e3. acq(L2)                 (T0,L2,{L1})
+    e4. rel(L2)
+    e5. rel(L1)
+    e6. acq(L3)
+    e7. wr(V1)
+    e8. rel(L3)
+    e9.             acq(L3)
+    e10.             rd(V1)
+    e11.             rel(L3)
+    e12.             acq(L2)
+    e13.             acq(L1)     (T1,L1,{L2})
+    e14.             rel(L1)
+    e15.             rel(L2)
 
 We encounter the following lock dependencies.
 
-    D1 = (T1, x, {y})
+    D1 = (T0,L2,{L1})
 
-    D2 = (T2, y, {z})
+    D2 = (T1,L1,{L2})
 
 We issue a deadlock warning because D1, D2 form a cyclic lock dependency
 chain.
 
 This is false positive! Due to the write-read dependency, events in
-thread T1 must happen before the events in thread T2.
+thread T1 must happen before the events in thread T2. Hence, it is
+impossible to find a reordering that results in a deadlock.
+
+Consider the following failed attempt.
+
+       T0          T1          LockDep
+    e1. fork(T1)
+    e2. acq(L1)
+    e9.             acq(L3)
+    e10.             rd(V1)
+    e11.             rel(L3)
+    e12.             acq(L2)
+
+The above reordering is not valid. The read event e10 is missing its
+“last write”.
 
 ## False negatives
 
 Consider the following example.
 
-         T1         T2        T3
-
-    1.  acq(x)
-    2.  fork(T2)
-    3.             acq(y)
-    4.             rel(y)
-    5.  join(T2)
-    6.  rel(x)
-    7.                       acq(y)
-    8.                       acq(x)
-    9.                       rel(x)
-    10.                      rel(y)
+       T0          T1          T2          LockDep
+    e1. fork(T2)
+    e2. acq(L1)
+    e3. fork(T1)
+    e4.             acq(L2)
+    e5.             rel(L2)
+    e6. join(T1)
+    e7. rel(L1)
+    e8.                         acq(L2)
+    e9.                         acq(L1)     (T2,L1,{L2})
+    e10.                         rel(L1)
+    e11.                         rel(L2)
 
 We compute the following dependency.
 
-    D1 = (T3,x,{y})
+    D1 =  (T2,L1,{L2})
 
-There appears to be no deadlock (no cycle) but there’s a trace
-reordering under which we run into a deadlock.
+As there is only a single lock dependency, no deadlock warning is
+isused.
 
-         T1         T2        T3
+However, we run into a deadlock situation as shown by the following
+reordering.
 
-    1.  acq(x)
-    2.  fork(T2)
-    7.                       acq(y)
-    8.                       B-acq(x)
-    3.             B-acq(y)
-    5.  B-join(T2)
+       T0          T1          T2
+    e1. fork(T2)
+    e2. acq(L1)
+    e3. fork(T1)
+    e8.                         acq(L2)
+
+    The events below are the "next" possible events to consider.
+    None of the events can be added to the trace cause this leads then to an invalid trace.
+    For example, events e4 and e9 violate lock semantics, event e6 violates the condition
+    that thread T1 is not fully completed.
+
+    As before, we write B-join(T1), B-acq(L2) and B-acq(L1) to indicate that these events
+    are "blocked" and cannot be added to the trace.
+
+    e9.                         B-acq(L1)
+    e4.             B-acq(L2)
+    e6. B-join(T1)
 
 The above is an example of a *cross-thread* critical section that
 includes several events due to the fork/join dependency. However, the
@@ -494,12 +561,453 @@ TSan reports a deadlock but this is a clear false positive.
 
 -   False positives and false negatives remain an issue.
 
+    -   False positive means that there exists a cyclic lock dependency
+        chain but there is no valid reordering that results in a
+        deadlock.
+
+    -   False negative means that there is a reordering that results in
+        a deadlock but there is no cyclic lock dependency chain.
+
 -   Go-style mutexes pose further challenges (false positives).
 
 -   On-going research to reduce the amount of false positives and false
     negatives.
 
-## Appendix: Some implementation in Go
+## Appendix: Some implementations in Go
+
+Lock dependencies
+
+[Go playground](https://go.dev/play/p/PpZNexJfw-t)
+
+    package main
+
+    // Deadlock detection based on lock dependencies
+
+    import "fmt"
+    import "strconv"
+    import "strings"
+
+    // Example traces.
+
+    // Traces are assumed to be well-formed.
+    // For example, if we fork(ti) we assume that thread ti exists.
+
+    // Standard example
+    func trace_1() []Event {
+        t0 := mainThread()
+        t1 := nextThread(t0)
+        x := 1
+        y := 2
+        return []Event{
+            fork(t0, t1),
+            acq(t0, x),
+            acq(t0, y),
+            rel(t0, y),
+            rel(t0, x),
+            acq(t1, y),
+            acq(t1, x),
+            rel(t1, x),
+            rel(t1, y)}
+
+    }
+
+    // Same Thread
+    func trace_2() []Event {
+        t0 := mainThread()
+        t1 := nextThread(t0)
+        x := 1
+        y := 2
+        return []Event{
+            fork(t0, t1),
+            acq(t1, x),
+            rel(t1, x),
+            acq(t0, x),
+            acq(t0, y),
+            rel(t0, y),
+            rel(t0, x),
+            acq(t0, y),
+            acq(t0, x),
+            rel(t0, x),
+            rel(t0, y)}
+
+    }
+
+    // Guard lock
+    func trace_3() []Event {
+        t0 := mainThread()
+        t1 := nextThread(t0)
+        x := 1
+        y := 2
+        z := 3
+        return []Event{
+            fork(t0, t1),
+            acq(t0, z),
+            acq(t0, x),
+            acq(t0, y),
+            rel(t0, y),
+            rel(t0, x),
+            rel(t0, z),
+            acq(t1, z),
+            acq(t1, y),
+            acq(t1, x),
+            rel(t1, x),
+            rel(t1, y),
+            rel(t1, z)}
+
+    }
+
+    // False positive due to write-read dependency
+    func trace_4() []Event {
+        t0 := mainThread()
+        t1 := nextThread(t0)
+        x := 1
+        y := 2
+        z := 3
+        a := 1
+        return []Event{
+            fork(t0, t1),
+            acq(t0, x),
+            acq(t0, y),
+            rel(t0, y),
+            rel(t0, x),
+            acq(t0, z),
+            wr(t0, a),
+            rel(t0, z),
+            acq(t1, z),
+            rd(t1, a),
+            rel(t1, z),
+            acq(t1, y),
+            acq(t1, x),
+            rel(t1, x),
+            rel(t1, y)}
+
+    }
+
+    func trace_5() []Event {
+        t0 := mainThread()
+        t1 := nextThread(t0)
+        t2 := nextThread(t1)
+        x := 1
+        y := 2
+        return []Event{
+            fork(t0, t2),
+            acq(t0, x),
+            fork(t0, t1),
+            acq(t1, y),
+            rel(t1, y),
+            join(t0, t1),
+            rel(t0, x),
+            acq(t2, y),
+            acq(t2, x),
+            rel(t2, x),
+            rel(t2, y)}
+
+    }
+
+    func main() {
+
+        run(trace_1())
+
+        run(trace_2())
+
+        run(trace_3())
+
+        run(trace_4())
+
+        run(trace_5())
+
+    }
+
+    ///////////////////////////////////////////////////////////////
+    // Helpers
+
+    func max(x, y int) int {
+        if x < y {
+            return y
+        }
+        return x
+    }
+
+    func debug(s string) {
+        fmt.Printf("%s", s)
+
+    }
+
+    ///////////////////////////////////////////////////////////////
+    // Events
+
+    type EvtKind int
+
+    const (
+        AcquireEvt EvtKind = 0
+        ReleaseEvt EvtKind = 1
+        WriteEvt   EvtKind = 2
+        ReadEvt    EvtKind = 3
+        ForkEvt    EvtKind = 4
+        JoinEvt    EvtKind = 5
+    )
+
+    type Event struct {
+        k_  EvtKind
+        id_ int
+        a_  int
+    }
+
+    func (e Event) thread() int   { return e.id_ }
+    func (e Event) kind() EvtKind { return e.k_ }
+    func (e Event) arg() int      { return e.a_ }
+
+    // Some convenience functions.
+    func rd(i int, a int) Event {
+        return Event{ReadEvt, i, a}
+    }
+
+    func wr(i int, a int) Event {
+        return Event{WriteEvt, i, a}
+    }
+
+    func acq(i int, a int) Event {
+        return Event{AcquireEvt, i, a}
+    }
+
+    func rel(i int, a int) Event {
+        return Event{ReleaseEvt, i, a}
+    }
+
+    func fork(i int, a int) Event {
+        return Event{ForkEvt, i, a}
+    }
+
+    func join(i int, a int) Event {
+        return Event{JoinEvt, i, a}
+    }
+
+    // Trace assumptions.
+    // Initial thread starts with 0. Threads have ids in ascending order.
+
+    func trace_info(es []Event) (int, map[int]bool, map[int]bool) {
+        max_tid := 0
+        vars := map[int]bool{}
+        locks := map[int]bool{}
+        for _, e := range es {
+            max_tid = max(max_tid, e.thread())
+            if e.kind() == WriteEvt || e.kind() == ReadEvt {
+                vars[e.arg()] = true
+            }
+            if e.kind() == AcquireEvt { // For each rel(x) there must exists some acq(x)
+                locks[e.arg()] = true
+            }
+        }
+        return max_tid, vars, locks
+    }
+
+    func mainThread() int      { return 0 }
+    func nextThread(i int) int { return i + 1 }
+
+    const (
+        ROW_OFFSET = 14
+    )
+
+    // Omit thread + loc info.
+    func displayEvtSimple(e Event) string {
+        var s string
+        arg := strconv.Itoa(e.arg())
+        switch {
+        case e.kind() == AcquireEvt:
+            s = "acq(L" + arg + ")" // L(ock)
+        case e.kind() == ReleaseEvt:
+            s = "rel(L" + arg + ")"
+        case e.kind() == WriteEvt:
+            s = "wr(V" + arg + ")" // V(ar)
+        case e.kind() == ReadEvt:
+            s = "rd(V" + arg + ")"
+        case e.kind() == ForkEvt:
+            s = "fork(T" + arg + ")" // T(hread)
+        case e.kind() == JoinEvt:
+            s = "join(T" + arg + ")"
+        }
+        return s
+    }
+
+    func colOffset(i int, row_offset int) string {
+        n := (int)(i)
+        return strings.Repeat(" ", n*row_offset)
+    }
+
+    // Thread ids fully cover [0..n]
+    func displayTraceWithLockDep(m int, es []Event, evt_ld map[int]LockDep, row_offset int) string {
+        s := ""
+        for i, e := range es {
+            ld_info := "     "
+            trace_position := i + 1 // trace position starts with 1
+            _, ok := evt_ld[trace_position]
+            if ok {
+                ld_info += evt_ld[trace_position].display()
+            }
+            row := "\n" + "e" + strconv.Itoa(i+1) + ". " + colOffset(e.thread(), row_offset) + displayEvtSimple(e) + colOffset(m-e.thread(), row_offset) + ld_info
+            s = s + row
+        }
+        // Add column headings.
+        heading := "   "
+        for i := 0; i <= m; i++ {
+            heading += "T" + strconv.Itoa(i) + strings.Repeat(" ", row_offset-2)
+        }
+        heading += "LockDep"
+        s = heading + s
+
+        return s
+    }
+
+    ///////////////////////////////////////////////////////////////
+    // Lock sets + lock depenencies
+
+    type LS map[int]bool
+
+    type LockDep struct {
+        thread_id int
+        lock      int
+        ls        LS
+    }
+
+    func (ls LS) empty() bool {
+        return len(ls) == 0
+
+    }
+
+    func (ls LS) add(x int) {
+        ls[x] = true
+    }
+
+    func (ls LS) remove(x int) {
+        delete(ls, x)
+    }
+
+    func (ls LS) display() string {
+        var s string
+        i := len(ls)
+        s = "{"
+        for lock, _ := range ls {
+
+            if i > 1 {
+                s = s + "L" + strconv.Itoa(lock) + ","
+
+            }
+            if i == 1 {
+                s = s + "L" + strconv.Itoa(lock)
+            }
+            i--
+        }
+        return s + "}"
+    }
+
+    func (ld LockDep) display() string {
+        var s string
+        s = "(T" + strconv.Itoa(ld.thread_id) + ",L" + strconv.Itoa(ld.lock) + "," + ld.ls.display() + ")"
+
+        return s
+
+    }
+
+    func copyLS(ls LS) LS {
+        new := make(map[int]bool)
+        for lock, _ := range ls {
+            new[lock] = true
+        }
+
+        return new
+    }
+
+    ///////////////////////////////////////////////////////////////
+
+    type State struct {
+        th_lockset     map[int]LS      // key = thread id
+        evt_lock_dep   map[int]LockDep // key = trace position
+        trace_position int
+    }
+
+    func run(es []Event) {
+
+        var s State
+
+        s.th_lockset = make(map[int]LS)
+        s.evt_lock_dep = make(map[int]LockDep)
+        s.trace_position = 1
+
+        max_tid := 0
+
+        for _, e := range es {
+            max_tid = max(max_tid, e.thread())
+        }
+
+        for i := 0; i <= max_tid; i++ {
+            s.th_lockset[i] = make(map[int]bool)
+        }
+
+        exec := func(e Event) {
+            switch {
+            case e.kind() == AcquireEvt:
+                s.acquire(e)
+            case e.kind() == ReleaseEvt:
+                s.release(e)
+            case e.kind() == ForkEvt:
+                s.fork(e)
+            case e.kind() == JoinEvt:
+                s.join(e)
+            case e.kind() == WriteEvt:
+                s.write(e)
+            case e.kind() == ReadEvt:
+                s.read(e)
+            }
+
+        }
+
+        for _, e := range es {
+            exec(e)
+            s.trace_position = s.trace_position + 1
+
+        }
+
+        fmt.Printf("\n%s\n", displayTraceWithLockDep(max_tid, es, s.evt_lock_dep, 12))
+
+    }
+
+    func (s *State) acquire(e Event) {
+        t := e.thread()
+        y := e.arg()
+
+        if !s.th_lockset[t].empty() {
+            ld := LockDep{t, y, copyLS(s.th_lockset[t])}
+            s.evt_lock_dep[s.trace_position] = ld
+
+        }
+
+        s.th_lockset[t].add(y)
+
+    }
+
+    func (s *State) release(e Event) {
+        t := e.thread()
+        y := e.arg()
+        s.th_lockset[t].remove(y)
+    }
+
+    func (s *State) fork(e Event) {
+
+    }
+
+    func (s *State) join(e Event) {
+
+    }
+
+    func (s *State) write(e Event) {
+
+    }
+
+    func (s *State) read(e Event) {
+
+    }
+
+## Appendix: Lock graph
 
 Here comes a simple implementation for dynamic deadlock prediction based
 on lock graphs.
