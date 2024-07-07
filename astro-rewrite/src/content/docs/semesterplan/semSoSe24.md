@@ -106,4 +106,4 @@ Wöchentlicher Ablauf.
         -   Schriftlich, ohne Hilfsmittel
         -   Teil der Modulklausur Autonome Systeme + Rechner Architektur
             (120min insgesamt)
-        -   Themen siehe oben
+        -   Themen siehe oben (alles ausser Concurrency models)
